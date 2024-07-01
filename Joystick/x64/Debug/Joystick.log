@@ -1,0 +1,13 @@
+﻿C:\Program Files (x86)\Windows Kits\10\build\10.0.26100.0\WindowsDriver.common.targets(1782,5): warning MSB3231: 无法移除目录“x64\Debug\Joystick\”。文件“C:\Users\Administrator\Documents\Driver\Joystick\x64\Debug\Joystick\”正由另一进程使用，因此该进程无法访问此文件。
+  Building 'Joystick' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
+  Stamping x64\Debug\Joystick.inf
+  Stamping [Version] section with DriverVer=07/01/2024,15.17.7.816
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(109-109): warning 2083: Section [copysystemsysfiles] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(117-117): warning 2083: Section [copyfilesdll] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(136-136): warning 2083: Section [joystick.inst.nt.coinstallers] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(140-140): warning 2083: Section [joystick.inst_coinstaller_addreg] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(144-144): warning 2083: Section [joystick.inst_coinstaller_copyfiles] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(148-148): warning 2083: Section [joystick.inst.nt.wdf] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(150-150): warning 2083: Section [joystick_wdfsect] not referenced or used.
+  driver.c
+  Joystick.vcxproj -> C:\Users\Administrator\Documents\Driver\Joystick\x64\Debug\Joystick.sys

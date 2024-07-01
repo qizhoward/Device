@@ -1,0 +1,19 @@
+﻿  Building 'KMDF Joystick' with toolset 'WindowsKernelModeDriver10.0' and the 'Universal' target platform.
+  Stamping x64\Debug\KMDFJoystick.inf
+  Stamping [Version] section with DriverVer=06/30/2024,21.17.22.787
+C:\Users\Administrator\Documents\Driver\KMDF Joystick\KMDFJoystick.inf(26-26): warning 2083: Section [standard.ntx86] not referenced or used.
+C:\Users\Administrator\Documents\Driver\KMDF Joystick\KMDFJoystick.inf(42-42): warning 2083: Section [modelssection.ntamd64] not referenced or used.
+  Driver.c
+  KMDF Joystick.vcxproj -> C:\Users\Administrator\Documents\Driver\KMDF Joystick\x64\Debug\KMDFJoystick.sys
+  Driver is 'Universal'.
+  ........................
+  Signability test complete.
+  
+  Errors:
+  None
+  
+  Warnings:
+  None
+  
+  Catalog generation complete.
+  C:\Users\Administrator\Documents\Driver\KMDF Joystick\x64\Debug\KMDF Joystick\kmdfjoystick.cat
