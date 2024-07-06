@@ -1603,8 +1603,38 @@ void UpdateCollections(WDFDEVICE Device)
 /*
     Initialize data structures in the device context area
 */
-void InitializeDeviceContext(PDEVICE_EXTENSION   devContext)
+// 产品索引常量
+
+
+
+// 定义设备描述符结构体
+typedef struct _DEVICE_DESCRIPTOR {
+    USHORT iProduct; // 产品字符串描述符的索引
+} DEVICE_DESCRIPTOR;
+
+// 定义字符串描述符数组的大小
+#define MAX_STRING_DESCRIPTORS 10
+
+// 字符串描述符数组
+const char* StringDescriptor[MAX_STRING_DESCRIPTORS] = {
+    NULL, // 可能包含其他描述符
+    "YuPeng Joystick" // 产品名称
+};
+
+
+#define ProductIndex 1
+
+void InitializeDeviceContext(_Inout_ PDEVICE_EXTENSION   devContext)
 {
+
+    // 设备描述符的初始化
+    DEVICE_DESCRIPTOR DeviceDescriptor = { 0 };
+    DeviceDescriptor.iProduct = ProductIndex;
+
+    // 假设你有一个设备描述符数组或类似的结构
+    // 设置产品字符串描述符
+    StringDescriptor[ProductIndex] = "YuPeng Joystick";
+
     // Init array of pointers to reports
     for (int id = 1; id<= Joystick_MAX_N_DEVICES; id++) {
         devContext->positions[id-1] = NULL;

@@ -1,6 +1,6 @@
 ﻿  Building 'Virtual Gamepad' with toolset 'WindowsKernelModeDriver10.0' and the 'Universal' target platform.
   Stamping x64\Debug\VirtualGamepad.inf
-  Stamping [Version] section with DriverVer=07/05/2024,20.1.54.726
+  Stamping [Version] section with DriverVer=07/06/2024,15.21.7.728
   Device.c
   Driver.c
   Queue.c

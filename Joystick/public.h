@@ -95,7 +95,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_Joystick, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 
 // Device Strings
 //Éè±¸×Ö·û´®
 #define VENDOR_STR_ID		L"Qizhiwoniu"
-#define PRODUCT_STR_ID		L"YuPeng GamePad"
+#define PRODUCT_STR_ID		L"YuPeng Joystick"
 #define	SERIALNUMBER_STR	MAKEWIDE(STRINGIFY(VER_X_)) L"." MAKEWIDE(STRINGIFY(VER_H_)) L"." MAKEWIDE(STRINGIFY(VER_M_)) L"."  MAKEWIDE(STRINGIFY(VER_L_))
 
 // Function codes;

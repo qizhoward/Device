@@ -8,7 +8,7 @@ Class       = System ; TODO: specify appropriate Class
 ClassGuid   = {4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
 Provider    = %ManufacturerName%
 CatalogFile = VirtualGamepad.cat
-DriverVer   = ; TODO: set DriverVer in stampinf property pages
+DriverVer   = 05/07/2024,1.0.0.0; TODO: set DriverVer in stampinf property pages
 PnpLockdown = 1
 
 [DestinationDirs]
@@ -30,13 +30,13 @@ WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll = 1
 
 [Standard.NTamd64]
 %VirtualGamepad.DeviceDesc%=VirtualGamepad_Device, Nefarius\VirtualGamepad\Gen1
-
+%joystick%    = VirtualGamepad_Device, root\VID_1234&PID_0FFB&REV_0222
 [Standard.NTx86]
 %VirtualGamepad.DeviceDesc%=VirtualGamepad_Device, Nefarius\VirtualGamepad\Gen1
-
+%joystick%    = VirtualGamepad_Device, root\VID_1234&PID_0FFB&REV_0222
 [Standard.NTARM64]
 %VirtualGamepad.DeviceDesc%=VirtualGamepad_Device, Nefarius\VirtualGamepad\Gen1
-
+%joystick%    = VirtualGamepad_Device, root\VID_1234&PID_0FFB&REV_0222
 [VirtualGamepad_Device.NT]
 CopyFiles = File_Copy
 
@@ -74,6 +74,7 @@ KmdfLibraryVersion = $KMDFVERSION$
 [Strings]
 SPSVCINST_ASSOCSERVICE = 0x00000002
 ManufacturerName = "Qizhiwoniu" ;TODO: Replace with your manufacturer name
+Joystick	   = "USB 手柄"
 DiskName = "VirtualGamepad Installation Disk"
 VirtualGamepad.DeviceDesc = "虚拟手柄总线"
 VirtualGamepad.SVCDESC = "VirtualGamepad Service"

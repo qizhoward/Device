@@ -13,7 +13,7 @@
 #define VER_FILEDESCRIPTION_STR     "游戏手柄驱动程序"
 #define VER_INTERNALNAME_STR        "Joystick.sys"
 #define VER_ORIGINALFILENAME_STR    "Joystick.sys"
-#define VER_PRODUCTNAME_STR			"Joystick"
+#define VER_PRODUCTNAME_STR			"YuPeng GamePad"
 #define VER_COMPANYNAME_STR			"Qizhiwoniu"
 #define VER_FILEVERSION				VER_X_,VER_H_,VER_M_,VER_L_
 #define PRODVER						PRODVER_TAG " Commit:" PRODVER_SHA1
