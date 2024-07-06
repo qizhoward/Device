@@ -1,65 +1,34 @@
-/*++
-
-Copyright (c) Shaul Eizikovich.  All rights reserved.
-
-    THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
-    KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-    IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR
-    PURPOSE.
-
-Module Name:
-
-    public.h
-
-Abstract:
-
-    Public header file for the vJoy project
-    Developpers that need to interface with vJoy need to include this file
-
-Author:
-
-
-Environment:
-
-    kernel mode and User mode
-
-Notes:
-
-
-Revision History:
-
-
---*/
+//
 #ifndef _PUBLIC_H
 #define _PUBLIC_H
 #pragma once
 
-// Compilation directives
+// Compilation directives 编译指令
 #define PPJOY_MODE
-#undef PPJOY_MODE	// Comment-out for compatibility mode
+#undef PPJOY_MODE	// Comment-out for compatibility mode 对兼容模式进行注释
 
 #ifdef PPJOY_MODE
 #include "PPJIoctl.h"
 #endif
 
-#include <INITGUID.H>	// Definitions for controlling GUID initialization
+#include <INITGUID.H>	// Definitions for controlling GUID initialization 用于控制GUID初始化的定义
 
-// Sideband comunication with vJoy Device
+// Sideband comunication with Joystick Device 与操纵杆设备的边带通信
 //{781EF630-72B2-11d2-B852-00C04FAD5101}
-DEFINE_GUID(GUID_DEVINTERFACE_VJOY, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 0x00, 0xC0, 0x4F, 0xAD, 0x51, 0x01);
+DEFINE_GUID(GUID_DEVINTERFACE_Joystick, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 0x00, 0xC0, 0x4F, 0xAD, 0x51, 0x01);
 
 //
 // Usage example:
-//		CreateFile(TEXT("\\\\.\\vJoy"), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+//		CreateFile(TEXT("\\\\.\\Joystick"), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 #ifdef PPJOY_MODE
 #define DEVICENAME_STRING			"PPJoyIOCTL1"
 #else
-#define DEVICENAME_STRING			"vJoy"
+#define DEVICENAME_STRING			"Joystick"
 #endif
 #define NTDEVICE_NAME_STRING		"\\Device\\"DEVICENAME_STRING
 #define SYMBOLIC_NAME_STRING		"\\DosDevices\\"DEVICENAME_STRING
 #define	DOS_FILE_NAME				"\\\\.\\"DEVICENAME_STRING
-#define VJOY_INTERFACE				L"Device_"
+#define Joystick_INTERFACE				L"Device_"
 
 // Use auto-generated version file from inc/
 #include "gen-versioninfo.h"
@@ -68,9 +37,9 @@ DEFINE_GUID(GUID_DEVINTERFACE_VJOY, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 0x00
 // Version parts as a serie of digits (from higher (X) significant number to lower (L))
 // Will be taken from CreateVersion.exe in gen-versioninfo.h
 #ifndef VER_X_
-#define VER_X_	2 // Must be within 0..0XF
-#define VER_H_	2 // Must be within 0..0XF
-#define VER_M_	2 // Must be within 0..0XF
+#define VER_X_	1 // Must be within 0..0XF
+#define VER_H_	0 // Must be within 0..0XF
+#define VER_M_	0 // Must be within 0..0XF
 #define VER_L_	0 // Must be within 0..0XF
 #endif
 
@@ -84,8 +53,8 @@ DEFINE_GUID(GUID_DEVINTERFACE_VJOY, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 0x00
 #endif // !USE_JOYSTICK_API_VERSION
 
 
-// Select whether driver has support for FFB
-#define VJOY_HAS_FFB
+// Select whether driver has support for FFB 选择驱动程序是否支持FFB
+#define Joystick_HAS_FFB
 // For FFB, Look for Registrys Keys to cleanup: 
 // HKEY_CURRENT_USER\\SYSTEM\\CurrentControlSet\\Control\\MediaProperties\\PrivateProperties\\Joystick\\OEM\\VID_1234& PID_0FFB"
 // HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\MediaProperties\PrivateProperties\Joystick\OEM\VID_1234&PID_0FFB
@@ -109,7 +78,8 @@ DEFINE_GUID(GUID_DEVINTERFACE_VJOY, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 0x00
 // Vendor ID
 #define VENDOR_N_ID		0x1234
 // Product ID changes if FFB is enabled or not (so we will have 2 different products and drivers)
-#ifdef VJOY_HAS_FFB
+//如果启用或不启用FFB，产品ID会发生变化（因此我们将有2种不同的产品和驱动程序）
+#ifdef Joystick_HAS_FFB
 // Product ID: FFB with registry keys in INF file
 #define	PRODUCT_N_ID	0xBEAD
 // Product ID: FFB without registry keys in INF file
@@ -118,19 +88,14 @@ DEFINE_GUID(GUID_DEVINTERFACE_VJOY, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 0x00
 #define	PRODUCT_N_ID	0x0FFB
 #endif
 
-// Complete driver version on 16bits for HID and driver: v0.0.0.0 (4 nibbles)
-// To avoid bugfix numbering to be reported in vjoy.inx file each time we have a new driver, 
-// just leave the 4th number off.
-// /!\ This number must matched what is written in the vjoy.inx file (root\VID_1234&PID_BEAD&REV_0XHM)
 #define	VERSION_N	(0x100*VER_X_ + 0x10*VER_H_ + VER_M_)
 
-// In case we want to move to 4digits, use following and change vjoy.inx accordingly
-//#define	VERSION_N	(0x1000*VER_X_ + 0x100*VER_H_ + 0*010*VER_M_ + VER_L_)
+
 
 // Device Strings
-//
-#define VENDOR_STR_ID		L"Shaul Eizikovich"
-#define PRODUCT_STR_ID		L"vJoy - Virtual Joystick"
+//设备字符串
+#define VENDOR_STR_ID		L"Qizhiwoniu"
+#define PRODUCT_STR_ID		L"YuPeng GamePad"
 #define	SERIALNUMBER_STR	MAKEWIDE(STRINGIFY(VER_X_)) L"." MAKEWIDE(STRINGIFY(VER_H_)) L"." MAKEWIDE(STRINGIFY(VER_M_)) L"."  MAKEWIDE(STRINGIFY(VER_L_))
 
 // Function codes;
@@ -158,8 +123,8 @@ DEFINE_GUID(GUID_DEVINTERFACE_VJOY, 0x781EF630, 0x72B2, 0x11d2, 0xB8, 0x52, 0x00
 #define F_RESET_DEV			0x91F
 #define F_GET_POSITIONS		0x920
 
-// IO Device Control codes;
-#define IOCTL_VJOY_GET_ATTRIB       CTL_CODE (FILE_DEVICE_UNKNOWN, GETATTRIB, METHOD_BUFFERED, FILE_WRITE_ACCESS)
+// IO Device Control codes;//IO设备控制代码
+#define IOCTL_Joystick_GET_ATTRIB       CTL_CODE (FILE_DEVICE_UNKNOWN, GETATTRIB, METHOD_BUFFERED, FILE_WRITE_ACCESS)
 #define LOAD_POSITIONS              CTL_CODE (FILE_DEVICE_UNKNOWN, F_LOAD_POSITIONS, METHOD_BUFFERED, FILE_WRITE_ACCESS)
 #define GET_POSITIONS               CTL_CODE (FILE_DEVICE_UNKNOWN, F_GET_POSITIONS, METHOD_BUFFERED, FILE_READ_ACCESS)
 #define GET_FFB_DATA                CTL_CODE (FILE_DEVICE_UNKNOWN, F_GET_FFB_DATA, METHOD_OUT_DIRECT, FILE_ANY_ACCESS)
@@ -203,12 +168,10 @@ typedef struct _HID_DEVICE_ATTRIBUTES
 } HID_DEVICE_ATTRIBUTES, * PHID_DEVICE_ATTRIBUTES;
 #endif
 
-// Device Type
-//enum DevType { vJoy, vXbox };
 
-// Error levels for status report
+// Error levels for status report 状态报告的错误级别
 enum ERRLEVEL { INFO, WARN, ERR, FATAL, APP };
-// Status report function prototype
+// Status report function prototype 状态报告功能原型
 #ifdef WINAPI
 typedef BOOL(WINAPI* StatusMessageFunc)(void* output, TCHAR* buffer, enum ERRLEVEL level);
 #endif
@@ -256,11 +219,11 @@ typedef struct _JOYSTICK_POSITION
     DWORD	bHatsEx3;	// 16-bit of continuous HAT switch
 } JOYSTICK_POSITION, * PJOYSTICK_POSITION;
 
-#define VJOY_MAX_N_DEVICES  16 // Maximum number of vJoy devices
-#define VJOY_NUMBER_OF_AXES (8) // Maximum number of axes
-#define VJOY_NUMBER_OF_HAT (4) // Maximum number of hats
-#define VJOY_NUMBER_OF_BUTTONS (128) // Maximum number of hat
-#define VJOY_AXIS_MAX_VALUE (0x7FFF) // Maximum value for an axis
+#define Joystick_MAX_N_DEVICES  16 // Maximum number of Joystick devices 操纵手柄设备的最大数量
+#define Joystick_NUMBER_OF_AXES (8) // Maximum number of axes 最大轴数
+#define Joystick_NUMBER_OF_HAT (4) // Maximum number of hats 帽子的最大数量
+#define Joystick_NUMBER_OF_BUTTONS (32) // Maximum number of hat 帽子的最大数量
+#define Joystick_AXIS_MAX_VALUE (0x7FFF) // Maximum value for an axis 轴的最大值
 
 #elif USE_JOYSTICK_API_VERSION == 2
 
@@ -303,11 +266,11 @@ typedef struct _JOYSTICK_POSITION_V2
 typedef JOYSTICK_POSITION_V2 JOYSTICK_POSITION;
 typedef PJOYSTICK_POSITION_V2 PJOYSTICK_POSITION;
 
-#define VJOY_MAX_N_DEVICES  16 // Maximum number of vJoy devices
-#define VJOY_NUMBER_OF_AXES (8) // Maximum number of axes
-#define VJOY_NUMBER_OF_HAT (4) // Maximum number of hats
-#define VJOY_NUMBER_OF_BUTTONS (128) // Maximum number of hat
-#define VJOY_AXIS_MAX_VALUE (0x7FFF) // Maximum value for an axis
+#define Joystick_MAX_N_DEVICES  16 // Maximum number of Joystick devices
+#define Joystick_NUMBER_OF_AXES (8) // Maximum number of axes
+#define Joystick_NUMBER_OF_HAT (4) // Maximum number of hats
+#define Joystick_NUMBER_OF_BUTTONS (32) // Maximum number of hat
+#define Joystick_AXIS_MAX_VALUE (0x7FFF) // Maximum value for an axis
 
 
 #elif USE_JOYSTICK_API_VERSION == 3
@@ -362,37 +325,38 @@ typedef struct _JOYSTICK_POSITION_V3
 typedef JOYSTICK_POSITION_V3 JOYSTICK_POSITION;
 typedef PJOYSTICK_POSITION_V3 PJOYSTICK_POSITION;
 
-#define VJOY_MAX_N_DEVICES  (16) // Maximum number of vJoy devices
-#define VJOY_NUMBER_OF_AXES (16) // Maximum number of axes
-#define VJOY_NUMBER_OF_HAT (4) // Maximum number of hats
-#define VJOY_NUMBER_OF_BUTTONS (128) // Maximum number of hat
-#define VJOY_AXIS_MAX_VALUE (0x7FFF) // Maximum value for an axis
+#define Joystick_MAX_N_DEVICES  (16) // Maximum number of Joystick devices
+#define Joystick_NUMBER_OF_AXES (16) // Maximum number of axes
+#define Joystick_NUMBER_OF_HAT (4) // Maximum number of hats
+#define Joystick_NUMBER_OF_BUTTONS (32) // Maximum number of hat
+#define Joystick_AXIS_MAX_VALUE (0x7FFF) // Maximum value for an axis
 
 #endif
 
 
 //----------------------------------------------------------
-// FFB Features to be placed in vJoy's driver memory context
-
+// FFB Features to be placed in Joystick's driver memory context 
 // Uncomment this to have a wrong HID descriptor for the FFB
 // This allows to make the device to not being reported as a
 // FFB device!
-//#define VJOY_FORCE_WRONG_FFB_HID
+//#define Joystick_FORCE_WRONG_FFB_HID
 
 // Max 1..100 effect block index, 10 simultaneously played
-#define VJOY_FFB_FIRST_EFFECT_ID            (1)
-#define VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX    (100)
-#define VJOY_FFB_MAX_SIMULTANEOUS_EFFECTS   (10)
+#define Joystick_FFB_FIRST_EFFECT_ID            (1)
+#define Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX    (100)
+#define Joystick_FFB_MAX_SIMULTANEOUS_EFFECTS   (10)
 
-#define VJOY_FFB_EFFECT_FREE                (0x00)
-#define VJOY_FFB_EFFECT_ALLOCATED           (0x01)
+#define Joystick_FFB_EFFECT_FREE                (0x00)
+#define Joystick_FFB_EFFECT_ALLOCATED           (0x01)
 
 
 // For HID descriptor : use only X, or X/Y axes for FFB
 // Can be 1 (X) or 2 (X and Y) - see ESP Wheel source code
+//对于HID描述符：仅使用X轴或X/Y轴作为FFB
+//可以是1（X）或2（X和Y）-请参阅ESP车轮源代码
 #define FFB_USE_XY_AXES                     (2)
 
-// Turn on 1 byte packing of struct, dummy fields will be added when needed
+// Turn on 1 byte packing of struct, dummy fields will be added when needed //打开结构的1字节打包，需要时会添加伪字段
 #include <pshpack1.h>
 
 // FFB: PID Block Load Feature Report=2
@@ -403,7 +367,7 @@ typedef struct _FFB_PID_BLOCK_LOAD_REPORT
     BYTE    EffectBlockIndex;
     // 0 ongoing, 1=Success,2=Full,3=Error
     BYTE	LoadStatus;
-    // equals =0 if full, or sizeof(FFB_PID_EFFECT_STATE_REPORT) * (100 - created) max is VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX
+    // equals =0 if full, or sizeof(FFB_PID_EFFECT_STATE_REPORT) * (100 - created) max is Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX
     USHORT	RAMPoolAvailable;
 } FFB_PID_BLOCK_LOAD_REPORT, * PFFB_PID_BLOCK_LOAD_REPORT;
 
@@ -436,17 +400,17 @@ typedef struct _FFB_PID_EFFECT_STATE_REPORT
 } FFB_PID_EFFECT_STATE_REPORT, * PFFB_PID_EFFECT_STATE_REPORT;
 
 // All FFB PID data, one per device
-// This struct will be transfered between vJoy and client application
+// This struct will be transfered between Joystick and client application
 typedef struct _FFB_DEVICE_PID
 {
     FFB_PID_BLOCK_LOAD_REPORT   PIDBlockLoad;
     FFB_PID_POOL_REPORT         PIDPool;
     // All Effect States, as 2-bytes
-    FFB_PID_EFFECT_STATE_REPORT EffectStates[VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX];
-    // Index to next free slot, between 1 and VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX+1
-    // If >VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX => full
+    FFB_PID_EFFECT_STATE_REPORT EffectStates[Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX];
+    // Index to next free slot, between 1 and Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX+1
+    // If >Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX => full
     BYTE                        NextFreeEID;
-    // Index to last valid slot that has been used, between 1 to VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX
+    // Index to last valid slot that has been used, between 1 to Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX
     // 0 if no effect yet created/used
     BYTE                        LastEID;
 } FFB_DEVICE_PID, * PFFB_DEVICE_PID;

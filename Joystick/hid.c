@@ -1,30 +1,4 @@
-/*++
 
-Copyright (c) Shaul Eizikovich.  All rights reserved.
-
-    THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
-    KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-    IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR
-    PURPOSE.
-
-Module Name:
-
-    hid.c
-
-Abstract:
-
-    Code for handling HID related requests
-
-Author:
-
-
-Environment:
-
-    kernel mode only
-
-Revision History:
-
---*/
 
 #define USE_EXTERNAL_HARDCODED_HID_REPORT_DESCRIPTOR
 //#define USE_HARDCODED_HID_REPORT_DESCRIPTOR_5
@@ -37,59 +11,33 @@ Revision History:
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text( PAGE, vJoySetFeature)
+#pragma alloc_text( PAGE, JoystickSetFeature)
 #pragma alloc_text( PAGE, SendVendorCommand)
-#pragma alloc_text (PAGE, vJoyEvtIoDeviceControl)
-#pragma alloc_text (PAGE, vJoyCreateControlDevice)
-#pragma alloc_text (PAGE, vJoyDeleteControlDevice)
-#pragma alloc_text (PAGE, vJoyEvtDeviceContextCleanup)
+#pragma alloc_text (PAGE, JoystickEvtIoDeviceControl)
+#pragma alloc_text (PAGE, JoystickCreateControlDevice)
+#pragma alloc_text (PAGE, JoystickDeleteControlDevice)
+#pragma alloc_text (PAGE, JoystickEvtDeviceContextCleanup)
 #pragma alloc_text (PAGE, GetReportDescriptorFromRegistry)
 #pragma alloc_text (PAGE, GetInitValueFromRegistry)
 #pragma alloc_text (PAGE, CalcInitValue)
 //#pragma alloc_text (PAGE, UpdateCollections)
-#pragma alloc_text (PAGE, vJoyEvtDeviceReleaseHardware)
-#pragma alloc_text (PAGE, vJoyEvtDevicePrepareHardware)
-#pragma alloc_text (PAGE, vJoyEvtDeviceSelfManagedIoFlush)
-#pragma alloc_text (PAGE, vJoyEvtDevicePnpStateChange)
+#pragma alloc_text (PAGE, JoystickEvtDeviceReleaseHardware)
+#pragma alloc_text (PAGE, JoystickEvtDevicePrepareHardware)
+#pragma alloc_text (PAGE, JoystickEvtDeviceSelfManagedIoFlush)
+#pragma alloc_text (PAGE, JoystickEvtDevicePnpStateChange)
 #endif
 
 // Global handle to the Control Device used for sideband communication
 WDFDEVICE	g_ControlDevice = NULL;
 
 VOID
-vJoyEvtInternalDeviceControl(
+JoystickEvtInternalDeviceControl(
     IN WDFQUEUE     Queue,
     IN WDFREQUEST   Request,
     IN size_t       OutputBufferLength,
     IN size_t       InputBufferLength,
     IN ULONG        IoControlCode
 )
-/*++
-
-Routine Description:
-
-    This event is called when the framework receives
-    IRP_MJ_INTERNAL DEVICE_CONTROL requests from the system.
-
-Arguments:
-
-    Queue - Handle to the framework queue object that is associated
-            with the I/O request.
-    Request - Handle to a framework request object.
-
-    OutputBufferLength - length of the request's output buffer,
-                        if an output buffer is available.
-    InputBufferLength - length of the request's input buffer,
-                        if an input buffer is available.
-
-    IoControlCode - the driver-defined or system-defined I/O control code
-                    (IOCTL) that is associated with the request.
-Return Value:
-
-    VOID
-
---*/
-
 {
     NTSTATUS            status = STATUS_SUCCESS;
     WDFDEVICE           device;
@@ -107,52 +55,38 @@ Return Value:
     device = WdfIoQueueGetDevice(Queue);
     devContext = GetDeviceContext(device);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyEvtInternalDeviceControl: IoControlCode=%x\n", IoControlCode);
-
-    //
-    // Please note that HIDCLASS provides the buffer in the Irp->UserBuffer
-    // field irrespective of the ioctl buffer type. However, framework is very
-    // strict about type checking. You cannot get Irp->UserBuffer by using
-    // WdfRequestRetrieveOutputMemory if the ioctl is not a METHOD_NEITHER
-    // internal ioctl. So depending on the ioctl code, we will either
-    // use retreive function or escape to WDM to get the UserBuffer.
-    //
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickEvtInternalDeviceControl: IoControlCode=%x\n", IoControlCode);
 
     switch (IoControlCode) {
-
+        
         case IOCTL_HID_GET_DEVICE_DESCRIPTOR:
             //
             // Retrieves the device's HID descriptor.
             //
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_GET_DEVICE_DESCRIPTOR]:\n");
-            status = vJoyGetHidDescriptor(device, Request);
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_GET_DEVICE_DESCRIPTOR]:\n");
+            status = JoystickGetHidDescriptor(device, Request);
             break;
         case IOCTL_HID_GET_DEVICE_ATTRIBUTES:
             //
             //Retrieves a device's attributes in a HID_DEVICE_ATTRIBUTES structure.
             //
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_GET_DEVICE_ATTRIBUTES]:\n");
-            status = vJoyGetDeviceAttributes(Request);
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_GET_DEVICE_ATTRIBUTES]:\n");
+            status = JoystickGetDeviceAttributes(Request);
             break;
 
         case IOCTL_HID_GET_REPORT_DESCRIPTOR:
             //
             //Obtains the report descriptor for the HID device.
             //
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_GET_REPORT_DESCRIPTOR]:\n");
-            status = vJoyGetReportDescriptor(device, Request);
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_GET_REPORT_DESCRIPTOR]:\n");
+            status = JoystickGetReportDescriptor(device, Request);
             break;
 
 
         case IOCTL_HID_READ_REPORT:
 
-            //
-            // Returns a report from the device into a class driver-supplied buffer.
-            // For now queue the request to the manual queue. The request will
-            // be retrived and completd when continuous reader reads new data
-            // from the device.
-            //
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_READ_REPORT]:\n");
+      
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_READ_REPORT]:\n");
             status = WdfRequestForwardToIoQueue(Request, devContext->ReadReportMsgQueue);
 
             if (!NT_SUCCESS(status)) {
@@ -172,24 +106,8 @@ Return Value:
 
         case IOCTL_HID_SEND_IDLE_NOTIFICATION_REQUEST:
 
-            //
-            // Hidclass sends this IOCTL for devices that have opted-in for Selective
-            // Suspend feature. This feature is enabled by adding a registry value
-            // "SelectiveSuspendEnabled" = 1 in the hardware key through inf file 
-            // (see hidusbfx2.inf). Since hidclass is the power policy owner for 
-            // this stack, it controls when to send idle notification and when to 
-            // cancel it. This IOCTL is passed to USB stack. USB stack pends it. 
-            // USB stack completes the request when it determines that the device is
-            // idle. Hidclass's idle notification callback get called that requests a 
-            // wait-wake Irp and subsequently powers down the device. 
-            // The device is powered-up either when a handle is opened for the PDOs 
-            // exposed by hidclass, or when usb stack completes wait
-            // wake request. In the first case, hidclass cancels the notification 
-            // request (pended with usb stack), cancels wait-wake Irp and powers up
-            // the device. In the second case, an external wake event triggers completion
-            // of wait-wake irp and powering up of device.
-            //
-            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_SEND_IDLE_NOTIFICATION_REQUEST]:\n");
+  
+            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_SEND_IDLE_NOTIFICATION_REQUEST]:\n");
             status = STATUS_NOT_SUPPORTED;
             break;
 
@@ -200,8 +118,8 @@ Return Value:
             //
             // returns a feature report associated with a top-level collection
             //
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_GET_FEATURE]:\n");
-            status = vJoyGetFeature(Request);
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_GET_FEATURE]:\n");
+            status = JoystickGetFeature(Request);
             WdfRequestComplete(Request, status);
             return;
 
@@ -210,17 +128,17 @@ Return Value:
             // This sends a HID class feature report to a top-level collection of
             // a HID class device.
             //
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_SET_FEATURE]:\n");
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_SET_FEATURE]:\n");
 
         case IOCTL_HID_WRITE_REPORT:
 
             // Extracting the ID from the request
             id = FfbGetDevIDfromFfbRequest(Request);
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_WRITE_REPORT]: id=%d\n", id);
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_WRITE_REPORT]: id=%d\n", id);
 
             // If FFB is not active then just reject this request
             if (!devContext->FfbEnable[id-1]) {
-                TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_WRITE_REPORT]: ffb disabled for id=%d !\n", id);
+                TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_WRITE_REPORT]: ffb disabled for id=%d !\n", id);
                 WdfRequestComplete(Request, STATUS_SUCCESS);
                 return;
             };
@@ -232,7 +150,7 @@ Return Value:
                             "WdfRequestForwardToIoQueue (FfbWriteQ[%d]) failed with status: 0x%x\n", id - 1, status);
                 WdfRequestComplete(Request, status);
             }
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_WRITE_REPORT]: forwarded to queue and leaving with stt=0x%x !\n", status);
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_WRITE_REPORT]: forwarded to queue and leaving with stt=0x%x !\n", status);
             return;
 
 
@@ -241,7 +159,7 @@ Return Value:
             // returns a HID class input report associated with a top-level
             // collection of a HID class device.
             //
-            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_GET_INPUT_REPORT]:\n");
+            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_GET_INPUT_REPORT]:\n");
             status = STATUS_NOT_SUPPORTED;
             break;
 
@@ -250,7 +168,7 @@ Return Value:
             // sends a HID class output report to a top-level collection of a HID
             // class device.
             //
-            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_SET_OUTPUT_REPORT]:\n");
+            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_SET_OUTPUT_REPORT]:\n");
             status = STATUS_NOT_SUPPORTED;
             break;
 
@@ -268,15 +186,15 @@ Return Value:
             // from the device extension of a top level collection associated with
             // the device.
             //
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_GET_STRING]:\n");
-            status = vJoyGetHidString(Request);
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_GET_STRING]:\n");
+            status = JoystickGetHidString(Request);
             break;
 
         case IOCTL_HID_ACTIVATE_DEVICE:
             //
             // Makes the device ready for I/O operations.
             //
-            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_ACTIVATE_DEVICE]:\n");
+            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_ACTIVATE_DEVICE]:\n");
             status = STATUS_NOT_SUPPORTED;
             break;
         case IOCTL_HID_DEACTIVATE_DEVICE:
@@ -284,31 +202,25 @@ Return Value:
             // Causes the device to cease operations and terminate all outstanding
             // I/O requests.
             //
-            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyEvtInternalDeviceControl[IOCTL_HID_DEACTIVATE_DEVICE]:\n");
+            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickEvtInternalDeviceControl[IOCTL_HID_DEACTIVATE_DEVICE]:\n");
             status = STATUS_NOT_SUPPORTED;
             break;
 
         default:
-            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyEvtInternalDeviceControl[default]: ioctl not supported!\n");
+            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickEvtInternalDeviceControl[default]: ioctl not supported!\n");
             status = STATUS_NOT_SUPPORTED;
             break;
     }
 
     WdfRequestComplete(Request, status);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyEvtInternalDeviceControl: exiting with stt=0x%x\n", status);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickEvtInternalDeviceControl: exiting with stt=0x%x\n", status);
 
     return;
 }
 
-
-// Handle IOCTL_HID_GET_FEATURE
-/*
- This function acts as a filter for FFB packets that needs processing, like:
- -
- */
 NTSTATUS
-vJoyGetFeature(
+JoystickGetFeature(
     IN WDFREQUEST Request
 )
 {
@@ -327,11 +239,11 @@ vJoyGetFeature(
     WDF_REQUEST_PARAMETERS_INIT(&params);
     WdfRequestGetParameters(Request, &params);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetFeature: entering with controlcode=%x\n", params.Parameters.DeviceIoControl.IoControlCode);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetFeature: entering with controlcode=%x\n", params.Parameters.DeviceIoControl.IoControlCode);
 
     if (params.Parameters.DeviceIoControl.OutputBufferLength < sizeof(HID_XFER_PACKET)) {
         status = STATUS_BUFFER_TOO_SMALL;
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyGetFeature: error Outputbuffer too small (%d should be >= %d)\n", params.Parameters.DeviceIoControl.OutputBufferLength, sizeof(HID_XFER_PACKET));
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickGetFeature: error Outputbuffer too small (%d should be >= %d)\n", params.Parameters.DeviceIoControl.OutputBufferLength, sizeof(HID_XFER_PACKET));
         return status;
     };
 
@@ -339,7 +251,7 @@ vJoyGetFeature(
     transferPacket = (PHID_XFER_PACKET)WdfRequestWdmGetIrp(Request)->UserBuffer;
     if (transferPacket == NULL) {
         status = STATUS_INVALID_DEVICE_REQUEST;
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyGetFeature: error transfer packet is null\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickGetFeature: error transfer packet is null\n");
         return status;
     }
 
@@ -352,17 +264,17 @@ vJoyGetFeature(
     id = FfbGetDevIDfromFfbRequest(Request);
     if (!id) {
         status = STATUS_NO_SUCH_DEVICE;
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyGetFeature: error invalid device id (%d)\n", id);
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickGetFeature: error invalid device id (%d)\n", id);
         return status;
     }
 
     // Retrieve reportID
     BYTE reportID = transferPacket->reportId&0x0F;
-    TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "vJoyGetFeature: id=%d, xfer=%x reportId=%x\n", id, transferPacket->reportId, reportID);
+    TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "JoystickGetFeature: id=%d, xfer=%x reportId=%x\n", id, transferPacket->reportId, reportID);
 
     ////////////////////////////////////////
     // Block Load Report ID 2
-    // Byte[1]: Effect Block Index (1-100) max is VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX
+    // Byte[1]: Effect Block Index (1-100) max is Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX
     // Byte[2]: Block Load Success (1-3)
     // Byte[3]: Block Load Full (1-3)
     // Byte[4]: Block Load Error (1-3)
@@ -381,7 +293,7 @@ vJoyGetFeature(
             ucTmp[3] = 0; // Load Full = 0
             ucTmp[4] = 1; // Load Error =1
         };
-        TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "vJoyGetFeature: Block Load ucTmp[1]=%x ucTmp[2]=%x ucTmp[3]=%x ucTmp[4]=%x\n",
+        TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "JoystickGetFeature: Block Load ucTmp[1]=%x ucTmp[2]=%x ucTmp[3]=%x ucTmp[4]=%x\n",
                     transferPacket->reportBuffer[1], transferPacket->reportBuffer[2], transferPacket->reportBuffer[3], transferPacket->reportBuffer[4]);
     }
 
@@ -400,7 +312,7 @@ vJoyGetFeature(
             ucTmp[2] = (UCHAR)((devContext->FfbPIDData[id-1].PIDPool.RAMPoolSize>>8)&0xFF);
             ucTmp[3] = (UCHAR)((devContext->FfbPIDData[id-1].PIDPool.MaxSimultaneousEffects)&0xFF);
             ucTmp[4] = (UCHAR)((devContext->FfbPIDData[id-1].PIDPool.MemoryManagement)&0xFF);
-            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "vJoyGetFeature: PoolRep ucTmp[1]=%x ucTmp[2]=%x ucTmp[3]=%x ucTmp[4]=%x\n",
+            TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "JoystickGetFeature: PoolRep ucTmp[1]=%x ucTmp[2]=%x ucTmp[3]=%x ucTmp[4]=%x\n",
                         transferPacket->reportBuffer[1], transferPacket->reportBuffer[2], transferPacket->reportBuffer[3], transferPacket->reportBuffer[4]);
         } else {
             // FFB Disabled
@@ -410,16 +322,16 @@ vJoyGetFeature(
             ucTmp[4] = (UCHAR)(0);
             // Very important: Notify device does not exist for POOL_REPORT!
             status = STATUS_NO_SUCH_DEVICE;
-            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyGetFeature: PoolRep ffb disabled, leaving early with stt=%d\n", status);
+            TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickGetFeature: PoolRep ffb disabled, leaving early with stt=%d\n", status);
             return status;
         }
-        TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "vJoyGetFeature: Pool ucTmp[1]=%x ucTmp[2]=%x ucTmp[3]=%x ucTmp[4]=%x\n",
+        TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "JoystickGetFeature: Pool ucTmp[1]=%x ucTmp[2]=%x ucTmp[3]=%x ucTmp[4]=%x\n",
                     transferPacket->reportBuffer[1], transferPacket->reportBuffer[2], transferPacket->reportBuffer[3], transferPacket->reportBuffer[4]);
     }
 
     ////////////////////////////////////////
     // State Report ID 4
-    // Byte[1]: Effect Block Index (1-100) max is VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX
+    // Byte[1]: Effect Block Index (1-100) max is Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX
     // Byte[2]: State Report (bitfield)
     ////////////////////////////////////////
     //NOT WORKING FOR NOW, AS WE ARE UNABLE TO SEND A HID REPORT BACK TO
@@ -434,11 +346,11 @@ vJoyGetFeature(
             ucTmp[1] = (UCHAR)(0);
             ucTmp[2] = (UCHAR)(0);
         }
-        TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "vJoyGetFeature: State report ucTmp[1]=%x ucTmp[2]=%x\n",
+        TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "JoystickGetFeature: State report ucTmp[1]=%x ucTmp[2]=%x\n",
                     transferPacket->reportBuffer[1], transferPacket->reportBuffer[2]);
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetFeature: exiting with stt=%d\n", status);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetFeature: exiting with stt=%d\n", status);
 
     return status;
 }
@@ -446,25 +358,9 @@ vJoyGetFeature(
 
 #if 1
 NTSTATUS
-vJoySetFeature(
+JoystickSetFeature(
     IN WDFREQUEST Request
 )
-/*++
-
-Routine Description
-
-    This routine sets the state of the Feature: in this
-    case Segment Display on the USB FX2 board.
-
-Arguments:
-
-    Request - Wdf Request
-
-Return Value:
-
-    NT status value
-
---*/
 {
     NTSTATUS                     status = STATUS_SUCCESS;
     //UCHAR                        commandData = 0;
@@ -479,7 +375,7 @@ Return Value:
     WDF_REQUEST_PARAMETERS_INIT(&params);
     WdfRequestGetParameters(Request, &params);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoySetFeature: entering with ioctl=0x%x\n", params.Parameters.DeviceIoControl.IoControlCode);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickSetFeature: entering with ioctl=0x%x\n", params.Parameters.DeviceIoControl.IoControlCode);
 
     //
     // IOCTL_HID_SET_FEATURE & IOCTL_HID_GET_FEATURE are not METHOD_NIEHTER
@@ -556,51 +452,25 @@ Return Value:
     //        );
     //}
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "vJoySetFeature Exit\n");
+    TraceEvents(TRACE_LEVEL_VERBOSE, DBG_IOCTL, "JoystickSetFeature Exit\n");
     return status;
 }
 #endif
 
 
 NTSTATUS
-vJoyGetHidDescriptor(
+JoystickGetHidDescriptor(
     IN WDFDEVICE Device,
     IN WDFREQUEST Request
 )
-/*++
 
-Routine Description:
-
-    Finds the HID descriptor and copies it into the buffer provided by the
-    Request.
-
-Arguments:
-
-    Device - Handle to WDF Device Object
-
-    Request - Handle to request object
-
-Return Value:
-
-    NT status code.
-
---*/
 {
     NTSTATUS            status = STATUS_SUCCESS;
     size_t              bytesToCopy = 0;
     WDFMEMORY           memory;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetHidDescriptor: entering\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetHidDescriptor: entering\n");
 
-    //
-    // This IOCTL is METHOD_NEITHER so WdfRequestRetrieveOutputMemory
-    // will correctly retrieve buffer from Irp->UserBuffer. 
-    // Remember that HIDCLASS provides the buffer in the Irp->UserBuffer
-    // field irrespective of the ioctl buffer type. However, framework is very
-    // strict about type checking. You cannot get Irp->UserBuffer by using
-    // WdfRequestRetrieveOutputMemory if the ioctl is not a METHOD_NEITHER
-    // internal ioctl.
-    //
     status = WdfRequestRetrieveOutputMemory(Request, &memory);
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "WdfRequestRetrieveOutputMemory failed 0x%x\n", status);
@@ -630,35 +500,14 @@ Return Value:
     //
     WdfRequestSetInformation(Request, bytesToCopy);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetHidDescriptor: exiting with stt=0x%x\n", status);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetHidDescriptor: exiting with stt=0x%x\n", status);
     return status;
 }
 
 NTSTATUS
-vJoyGetHidString(
+JoystickGetHidString(
     IN WDFREQUEST Request
 )
-/*++
-
-Routine Description:
-
-    Respond to IOCTL_HID_GET_STRING.
-    Finds the requested string and copies it into the buffer provided by the
-    Request.
-    The requested string may be one of:
-    - HID_STRING_ID_IMANUFACTURER: Manufacturer ID
-    - HID_STRING_ID_IPRODUCT: Product ID
-    - HID_STRING_ID_ISERIALNUMBER: Serial number
-
-Arguments:
-
-    Request - Handle to request object
-
-Return Value:
-
-    NT status code.
-
---*/
 {
     //PVOID				buffer;
     //size_t				bufSize;
@@ -671,7 +520,7 @@ Return Value:
 
     WDF_REQUEST_PARAMETERS_INIT(&Parameters);
     WdfRequestGetParameters(Request, &Parameters);
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetHidString: entering with hid string type=0x%x\n", (ULONGLONG)Parameters.Parameters.DeviceIoControl.Type3InputBuffer & 0xffff);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetHidString: entering with hid string type=0x%x\n", (ULONGLONG)Parameters.Parameters.DeviceIoControl.Type3InputBuffer & 0xffff);
 
     switch ((ULONGLONG)Parameters.Parameters.DeviceIoControl.Type3InputBuffer & 0xffff) {
         case HID_STRING_ID_IMANUFACTURER:
@@ -716,35 +565,17 @@ Return Value:
 
     WdfRequestSetInformation(Request, NumBytesTransferred);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetHidString: exiting with stt=0x%x\n", status);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetHidString: exiting with stt=0x%x\n", status);
     return status;
 
 }
 
 
 NTSTATUS
-vJoyGetReportDescriptor(
+JoystickGetReportDescriptor(
     IN WDFDEVICE Device,
     IN WDFREQUEST Request
 )
-/*++
-
-Routine Description:
-
-    Finds the Report descriptor and copies it into the buffer provided by the
-    Request.
-
-Arguments:
-
-    Device - Handle to WDF Device Object
-
-    Request - Handle to request object
-
-Return Value:
-
-    NT status code.
-
---*/
 {
     NTSTATUS            status = STATUS_SUCCESS;
     size_t				bytesToCopy = 0;
@@ -754,7 +585,7 @@ Return Value:
     PDEVICE_EXTENSION   pDeviceContext = NULL;
 
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetReportDescriptor: entering\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetReportDescriptor: entering\n");
 
     //
     // This IOCTL is METHOD_NEITHER so WdfRequestRetrieveOutputMemory
@@ -804,36 +635,21 @@ Return Value:
     //
     WdfRequestSetInformation(Request, bytesToCopy);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetReportDescriptor: exiting with stt=0x%x\n", status);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetReportDescriptor: exiting with stt=0x%x\n", status);
     return status;
 }
 
 
 NTSTATUS
-vJoyGetDeviceAttributes(
+JoystickGetDeviceAttributes(
     IN WDFREQUEST Request
 )
-/*++
-
-Routine Description:
-
-    Fill in the given struct _HID_DEVICE_ATTRIBUTES
-
-Arguments:
-
-    Request - Pointer to Request object.
-
-Return Value:
-
-    NT status code.
-
---*/
 {
     NTSTATUS                 status = STATUS_SUCCESS;
     PHID_DEVICE_ATTRIBUTES   deviceAttributes = NULL;
     PDEVICE_EXTENSION        pDeviceContext = NULL;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetDeviceAttributes: entering\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetDeviceAttributes: entering\n");
 
     pDeviceContext = GetDeviceContext(WdfIoQueueGetDevice(WdfRequestGetIoQueue(Request)));
 
@@ -848,7 +664,7 @@ Return Value:
     //
     status = WdfRequestRetrieveOutputBuffer(Request, sizeof(HID_DEVICE_ATTRIBUTES), &deviceAttributes, NULL);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "vJoyGetDeviceAttributes: WdfRequestRetrieveOutputBuffer failed 0x%x\n", status);
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_IOCTL, "JoystickGetDeviceAttributes: WdfRequestRetrieveOutputBuffer failed 0x%x\n", status);
         LogEventWithStatus(ERRLOG_DEVICE_ATTR_FAILED, L"WdfRequestRetrieveOutputBuffer", WdfDeviceWdmGetDeviceObject(WdfIoQueueGetDevice(WdfRequestGetIoQueue(Request))), status);
         return status;
     }
@@ -862,7 +678,7 @@ Return Value:
     //
     WdfRequestSetInformation(Request, sizeof(HID_DEVICE_ATTRIBUTES));
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "vJoyGetDeviceAttributes: exiting with stt=0x%x\n", status);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_IOCTL, "JoystickGetDeviceAttributes: exiting with stt=0x%x\n", status);
     return status;
 }
 
@@ -871,21 +687,6 @@ PCHAR
 DbgHidInternalIoctlString(
     IN ULONG        IoControlCode
 )
-/*++
-
-Routine Description:
-
-    Returns Ioctl string helpful for debugging
-
-Arguments:
-
-    IoControlCode - IO Control code
-
-Return Value:
-
-    Name String
-
---*/
 {
     switch (IoControlCode) {
         case IOCTL_HID_GET_DEVICE_DESCRIPTOR:
@@ -920,38 +721,13 @@ Return Value:
 
 
 VOID
-vJoyEvtIoDeviceControl(
+JoystickEvtIoDeviceControl(
     IN WDFQUEUE     Queue,
     IN WDFREQUEST   Request,
     IN size_t       OutputBufferLength,
     IN size_t       InputBufferLength,
     IN ULONG        IoControlCode
 )
-/*++
-Routine Description:
-
-    This event is called when the framework receives IRP_MJ_DEVICE_CONTROL
-    requests from the system.
-
-Arguments:
-
-    Queue - Handle to the framework queue object that is associated
-            with the I/O request.
-    Request - Handle to a framework request object.
-
-    OutputBufferLength - length of the request's output buffer,
-                        if an output buffer is available.
-    InputBufferLength - length of the request's input buffer,
-                        if an input buffer is available.
-
-    IoControlCode - the driver-defined or system-defined I/O control code
-                    (IOCTL) that is associated with the request.
-
-Return Value:
-
-   VOID
-
---*/
 {
     NTSTATUS             status = STATUS_SUCCESS;
     //WDF_DEVICE_STATE     deviceState;
@@ -973,8 +749,8 @@ Return Value:
     UNREFERENCED_PARAMETER(OutputBufferLength);
     UNREFERENCED_PARAMETER(InputBufferLength);
 
-    KdPrint(("vJoyEvtIoDeviceControl called\n"));
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyEvtIoDeviceControl: IoControlCode=%x\n", IoControlCode);
+    KdPrint(("JoystickEvtIoDeviceControl called\n"));
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickEvtIoDeviceControl: IoControlCode=%x\n", IoControlCode);
 
     PAGED_CODE();
 
@@ -1004,34 +780,9 @@ Return Value:
 }
 
 NTSTATUS
-vJoyCreateControlDevice(
+JoystickCreateControlDevice(
     WDFDEVICE Device
 )
-/*++
-
-Routine Description:
-
-    This routine is called to create a control device object so that application
-    can talk to the filter driver directly instead of going through the entire
-    device stack. This kind of control device object is useful if the filter
-    driver is underneath another driver which prevents ioctls not known to it
-    or if the driver's dispatch routine is owned by some other (port/class)
-    driver and it doesn't allow any custom ioctls.
-
-    NOTE: Since the control device is global to the driver and accessible to
-    all instances of the device this filter is attached to, we create only once
-    when the first instance of the device is started and delete it when the
-    last instance gets removed.
-
-Arguments:
-
-    Device - Handle to a filter device object.
-
-Return Value:
-
-    WDF status code
-
---*/
 {
     PCONTROL_DEVICE_EXTENSION	ConDevContext = NULL;
     PWDFDEVICE_INIT             pInit = NULL;
@@ -1048,30 +799,30 @@ Return Value:
     DECLARE_CONST_UNICODE_STRING(__SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R, L"D:P(A;;GA;;;SY)(A;;GRGWGX;;;BA)(A;;GRGW;;;WD)(A;;GR;;;RC)");
 
     PAGED_CODE();
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: entering\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: entering\n");
 
     //
     // First find out whether any Control Device has been created. If the
     // collection has more than one device then we know somebody has already
     // created or in the process of creating the device.
     //
-    WdfWaitLockAcquire(vJoyDeviceCollectionLock, NULL);
+    WdfWaitLockAcquire(JoystickDeviceCollectionLock, NULL);
 
-    if (WdfCollectionGetCount(vJoyDeviceCollection) == 1) {
+    if (WdfCollectionGetCount(JoystickDeviceCollection) == 1) {
         bCreate = TRUE;
     }
 
-    WdfWaitLockRelease(vJoyDeviceCollectionLock);
+    WdfWaitLockRelease(JoystickDeviceCollectionLock);
 
     if (!bCreate) {
-        TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: Device already created, exiting with success\n");
+        TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: Device already created, exiting with success\n");
         //
         // Control device is already created. So return success.
         //
         return STATUS_SUCCESS;
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: Creating Control Device\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: Creating Control Device\n");
 
     //
     //
@@ -1080,11 +831,11 @@ Return Value:
     //
 
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: Calling WdfControlDeviceInitAllocate\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: Calling WdfControlDeviceInitAllocate\n");
     pInit = WdfControlDeviceInitAllocate(WdfDeviceGetDriver(Device), &__SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R);
 
     if (pInit == NULL) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "vJoyCreateControlDevice: WdfControlDeviceInitAllocate Failed for insufficient resources\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "JoystickCreateControlDevice: WdfControlDeviceInitAllocate Failed for insufficient resources\n");
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto Error;
     }
@@ -1102,13 +853,13 @@ Return Value:
     RtlInitAnsiString(&ntDeviceNameA, TEXT(NTDEVICE_NAME_STRING));
     status = RtlAnsiStringToUnicodeString(&ntDeviceName, &ntDeviceNameA, TRUE);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "vJoyCreateControlDevice: RtlAnsiStringToUnicodeString for device name Failed\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "JoystickCreateControlDevice: RtlAnsiStringToUnicodeString for device name Failed\n");
         goto Error;
     }
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: Calling WdfDeviceInitAssignName\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: Calling WdfDeviceInitAssignName\n");
     status = WdfDeviceInitAssignName(pInit, &ntDeviceName);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "vJoyCreateControlDevice: WdfDeviceInitAssignName Failed\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "JoystickCreateControlDevice: WdfDeviceInitAssignName Failed\n");
         goto Error;
     }
     RtlFreeUnicodeString(&ntDeviceName);
@@ -1117,11 +868,11 @@ Return Value:
     //
     // Specify the size of device context & create the Control Device
     //
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: Creating Control Device\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: Creating Control Device\n");
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&controlAttributes, CONTROL_DEVICE_EXTENSION);
     status = WdfDeviceCreate(&pInit, &controlAttributes, &g_ControlDevice);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "vJoyCreateControlDevice: WdfDeviceCreate Failed\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "JoystickCreateControlDevice: WdfDeviceCreate Failed\n");
         goto Error;
     }
 
@@ -1134,12 +885,12 @@ Return Value:
     RtlInitAnsiString(&symbolicLinkNameA, TEXT(SYMBOLIC_NAME_STRING));
     status = RtlAnsiStringToUnicodeString(&symbolicLinkName, &symbolicLinkNameA, TRUE);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "vJoyCreateControlDevice: RtlAnsiStringToUnicodeString for symbolic name Failed\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "JoystickCreateControlDevice: RtlAnsiStringToUnicodeString for symbolic name Failed\n");
         goto Error;
     }
     status = WdfDeviceCreateSymbolicLink(g_ControlDevice, &symbolicLinkName);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "vJoyCreateControlDevice: Failed to create symbolic link (Native)\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "JoystickCreateControlDevice: Failed to create symbolic link (Native)\n");
         goto Error;
     }
     RtlFreeUnicodeString(&symbolicLinkName);
@@ -1151,7 +902,7 @@ Return Value:
 
     WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(&ioQueueConfig, WdfIoQueueDispatchSequential);
 
-    ioQueueConfig.EvtIoDeviceControl = vJoyEvtIoDeviceControl;
+    ioQueueConfig.EvtIoDeviceControl = JoystickEvtIoDeviceControl;
 
 
     //
@@ -1160,7 +911,7 @@ Return Value:
     //
     status = WdfIoQueueCreate(g_ControlDevice, &ioQueueConfig, WDF_NO_OBJECT_ATTRIBUTES, &queue);
     if (!NT_SUCCESS(status)) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "vJoyCreateControlDevice: WdfIoQueueCreate Failed\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "JoystickCreateControlDevice: WdfIoQueueCreate Failed\n");
         goto Error;
     }
 
@@ -1172,11 +923,12 @@ Return Value:
     //
     // Control devices must notify WDF when they are done initializing.   I/O is
     // rejected until this call is made.
-    //
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: Calling WdfControlFinishInitializing\n");
+    //控制设备在完成初始化时必须通知WDF。I/O是
+    //拒绝，直到发出此呼叫。
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: Calling WdfControlFinishInitializing\n");
     WdfControlFinishInitializing(g_ControlDevice);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: exiting cleanly\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: exiting cleanly\n");
     return STATUS_SUCCESS;
 
 Error:
@@ -1193,7 +945,7 @@ Error:
         WdfObjectDelete(g_ControlDevice);
         g_ControlDevice = NULL;
     }
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyCreateControlDevice: exiting with error 0x%x\n", status);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickCreateControlDevice: exiting with error 0x%x\n", status);
 
     return status;
 }
@@ -1201,77 +953,46 @@ Error:
 
 
 VOID
-vJoyDeleteControlDevice(
+JoystickDeleteControlDevice(
     WDFDEVICE Device
 )
-/*++
 
-Routine Description:
-
-    This routine deletes the control by doing a simple dereference.
-
-Arguments:
-
-    Device - Handle to a framework filter device object.
-
-Return Value:
-
-    WDF status code
-
---*/
 {
     UNREFERENCED_PARAMETER(Device);
 
     PAGED_CODE();
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyDeleteControlDevice: entering Control Device Start deleting\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickDeleteControlDevice: entering Control Device Start deleting\n");
     if (!g_ControlDevice) {
-        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "vJoyDeleteControlDevice: error No Control Device to delete\n");
+        TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "JoystickDeleteControlDevice: error No Control Device to delete\n");
         return;
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyDeleteControlDevice: Control Device: Purging queue\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickDeleteControlDevice: Control Device: Purging queue\n");
     WdfIoQueuePurge(WdfDeviceGetDefaultQueue(g_ControlDevice), WDF_NO_EVENT_CALLBACK, WDF_NO_CONTEXT);
 
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyDeleteControlDevice: Control Device: Deleting\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickDeleteControlDevice: Control Device: Deleting\n");
 
     if (g_ControlDevice) {
-        TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyDeleteControlDevice: Control Device: Deleting (Just before WdfObjectDelete)\n");
+        TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickDeleteControlDevice: Control Device: Deleting (Just before WdfObjectDelete)\n");
         WdfObjectDelete(g_ControlDevice);
         //WdfObjectDelete(Device);
-        TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyDeleteControlDevice: Control Device: Deleting (Just after WdfObjectDelete)\n");
+        TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickDeleteControlDevice: Control Device: Deleting (Just after WdfObjectDelete)\n");
         g_ControlDevice = NULL;
     }
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyDeleteControlDevice: exiting\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickDeleteControlDevice: exiting\n");
 }
 
 
 _IRQL_requires_same_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
-vJoyEvtDeviceContextCleanup(
+JoystickEvtDeviceContextCleanup(
     _In_ WDFDEVICE Device
 )
-/*++
 
-Routine Description:
-
-   EvtDeviceRemove event callback must perform any operations that are
-   necessary before the specified device is removed. The framework calls
-   the driver's EvtDeviceRemove callback when the PnP manager sends
-   an IRP_MN_REMOVE_DEVICE request to the driver stack.
-
-Arguments:
-
-    Device - Handle to a framework device object.
-
-Return Value:
-
-    WDF status code
-
---*/
 {
     // 	_IRQL_requires_max_(DISPATCH_LEVEL);
     PAGED_CODE();
@@ -1285,9 +1006,9 @@ Return Value:
     nDevices = DeviceCount(TRUE, -1); // Decrementing device count
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "FilterEvtDeviceContextCleanup: Device Count before decrementing is %d\n", nDevices);
 
-    WdfWaitLockAcquire(vJoyDeviceCollectionLock, NULL);
+    WdfWaitLockAcquire(JoystickDeviceCollectionLock, NULL);
 
-    nDevices = WdfCollectionGetCount(vJoyDeviceCollection);
+    nDevices = WdfCollectionGetCount(JoystickDeviceCollection);
 
     if (nDevices == 1) {
         //
@@ -1299,7 +1020,7 @@ Return Value:
         // sure another thread doesn't attempt to create while we are
         // deleting the device.
         //
-        vJoyDeleteControlDevice(Device);
+        JoystickDeleteControlDevice(Device);
     }
 
     devContext = GetDeviceContext(Device);
@@ -1307,13 +1028,13 @@ Return Value:
 
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "Device Count after decrementing is %d\n", DeviceCount(TRUE, 0));
 
-    //WdfCollectionRemove(vJoyDeviceCollection, Device);
-    WdfWaitLockRelease(vJoyDeviceCollectionLock);
+    //WdfCollectionRemove(JoystickDeviceCollection, Device);
+    WdfWaitLockRelease(JoystickDeviceCollectionLock);
 
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "FilterEvtDeviceContextCleanup: exiting with Device Count after decrementing is %d\n", nDevices);
 }
 
-NTSTATUS vJoyEvtDeviceReleaseHardware(
+NTSTATUS JoystickEvtDeviceReleaseHardware(
     IN  WDFDEVICE    Device,
     IN  WDFCMRESLIST ResourcesTranslated
 )
@@ -1323,11 +1044,11 @@ NTSTATUS vJoyEvtDeviceReleaseHardware(
     UNREFERENCED_PARAMETER(Device);
     UNREFERENCED_PARAMETER(ResourcesTranslated);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyEvtDeviceReleaseHardware: entering/exiting for PNP\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickEvtDeviceReleaseHardware: entering/exiting for PNP\n");
     return STATUS_SUCCESS;
 }
 
-NTSTATUS vJoyEvtDevicePrepareHardware(
+NTSTATUS JoystickEvtDevicePrepareHardware(
     IN  WDFDEVICE    Device,
     IN  WDFCMRESLIST ResourcesRaw,
     IN  WDFCMRESLIST ResourcesTranslated
@@ -1339,11 +1060,11 @@ NTSTATUS vJoyEvtDevicePrepareHardware(
     UNREFERENCED_PARAMETER(ResourcesRaw);
     UNREFERENCED_PARAMETER(ResourcesTranslated);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyEvtDevicePrepareHardware: entering/exiting for PNP\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickEvtDevicePrepareHardware: entering/exiting for PNP\n");
     return STATUS_SUCCESS;
 }
 
-VOID vJoyEvtDeviceSelfManagedIoFlush(
+VOID JoystickEvtDeviceSelfManagedIoFlush(
     IN  WDFDEVICE    Device
 )
 // Test Only
@@ -1351,10 +1072,10 @@ VOID vJoyEvtDeviceSelfManagedIoFlush(
     PAGED_CODE();
     UNREFERENCED_PARAMETER(Device);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyEvtDeviceSelfManagedIoFlush: entering/exiting for PNP\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickEvtDeviceSelfManagedIoFlush: entering/exiting for PNP\n");
 }
 
-VOID vJoyEvtDevicePnpStateChange(
+VOID JoystickEvtDevicePnpStateChange(
     IN  WDFDEVICE                          Device,
     IN  PCWDF_DEVICE_PNP_NOTIFICATION_DATA NotificationData
 )
@@ -1363,7 +1084,7 @@ VOID vJoyEvtDevicePnpStateChange(
     UNREFERENCED_PARAMETER(Device);
     UNREFERENCED_PARAMETER(NotificationData);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "vJoyEvtDevicePnpStateChange: entering/exiting for PNP\n");
+    TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "JoystickEvtDevicePnpStateChange: entering/exiting for PNP\n");
 }
 
 
@@ -1460,24 +1181,6 @@ VOID GetPositions(PJOYSTICK_POSITION pPosition, PDEVICE_EXTENSION pDevContext, U
     WdfWaitLockRelease(pDevContext->positionLock);
 }
 
-
-/*++
-
-Routine Description:
-
-   GetReportDescriptor helper function returns a pointer to the HID Report Descriptor
-   as requested in vJoyGetReportDescriptor()
-   If a corresponding value exists in the registry and is valid it is returned
-   Otherwize NULL is returned
-
-   Parameters:
-   Size [out]:		Caller suplied pointer to buffer that holds the size of the HID report descriptor
-   IdMask [out]:	Caller suplied pointer to a WORD. Each bit represent a top-level report.
-                    If bit n is set then Report ID n+1 is valid.
-   FFbmask [out]:	Caller suplied pointer to a WORD. Each bit represent a ffb enable bit.
-                    If bit n is set then FFB n+1 is enabled in registry.
-
---*/
 PVOID GetReportDescriptorFromRegistry(USHORT* Size, USHORT* IdMask, USHORT* FFbmask)
 {
 
@@ -1502,7 +1205,7 @@ PVOID GetReportDescriptorFromRegistry(USHORT* Size, USHORT* IdMask, USHORT* FFbm
     *IdMask = 0;
     *FFbmask = 0;
 
-    // Get the key of the Parameters key under "SYSTEM\\CurrentControlSet\\services\\vjoy"
+    // Get the key of the Parameters key under "SYSTEM\\CurrentControlSet\\services\\Joystick"
     status = WdfDriverOpenParametersRegistryKey(WdfGetDriver(), WRITE_DAC, WDF_NO_OBJECT_ATTRIBUTES, &KeyParameters);
     if (!NT_SUCCESS(status)) {
         TraceEvents(TRACE_LEVEL_ERROR, DBG_INIT, "GetReportDescriptorFromRegistry: error opening registry key stt=0x%x\n", status);
@@ -1684,22 +1387,6 @@ PVOID GetReportDescriptorFromRegistry(USHORT* Size, USHORT* IdMask, USHORT* FFbm
     return out;
 }
 
-/*++
-Routine Description:
-
-    GetInitValueFromRegistry helper function reads the initialization values for the controls of a device.
-
-    Returns:
-    Bit-Mask where every bit refers to an entry in the output buffer.
-    If a bit is set the the entry (Axis, POV or the button mask) is valid.
-    If none is valid (or the key is missing) returns 0.
-
-    Parameters:
-    id [in]:			The id of the device to initialize
-    data_buf[in/out]:	In:		Size of buffer in memger cb
-                        Out:	Initialization data
-
---*/
 unsigned int GetInitValueFromRegistry(USHORT		id, PDEVICE_INIT_VALS data_buf)
 {
     NTSTATUS				status = STATUS_SUCCESS;
@@ -1713,7 +1400,7 @@ unsigned int GetInitValueFromRegistry(USHORT		id, PDEVICE_INIT_VALS data_buf)
     UCHAR					nAxes = 0;
     int						iAxis;
     unsigned int			Mask = 0;
-    const int				nButtons = VJOY_NUMBER_OF_BUTTONS;
+    const int				nButtons = Joystick_NUMBER_OF_BUTTONS;
 
     PAGED_CODE();
 
@@ -1727,7 +1414,7 @@ unsigned int GetInitValueFromRegistry(USHORT		id, PDEVICE_INIT_VALS data_buf)
     };
     data_buf->id = id;
 
-    // Get the key of the Parameters key under "SYSTEM\\CurrentControlSet\\services\\vjoy"
+    // Get the key of the Parameters key under "SYSTEM\\CurrentControlSet\\services\\Joystick"
     status = WdfDriverOpenParametersRegistryKey(WdfGetDriver(), WRITE_DAC, WDF_NO_OBJECT_ATTRIBUTES, &KeyParameters);
     if (!NT_SUCCESS(status)) {
         LogEventWithStatus(ERRLOG_REP_REG_FAILED, L"WdfDriverOpenParametersRegistryKey", WdfDriverWdmGetDriverObject(WdfGetDriver()), status);
@@ -1774,27 +1461,6 @@ unsigned int GetInitValueFromRegistry(USHORT		id, PDEVICE_INIT_VALS data_buf)
     return Mask;
 }
 
-/*
-    CalcInitValue helper function calculates the initialization values for the controls of a device.
-
-    1.	Calls GetInitValueFromRegistry() for device #n.
-    2.	If returns all-valid (13 lower bits are set = 0x1FFF) then use the buffer for initialization.
-    3.	Otherwise store the buffer (Device Data) and the returned value (Device Validity mask)
-        and call GetInitValueFromRegistry() for device #0.
-    4.	Store device #0 buffer (Master Data) and  returned value (Master Validity mask).
-    5.	For every bit that is 0 in Device Validity mask and 1 in Master Validity mask:
-        a.	Copy value from Master to Device data buffer.
-        b.	Set bit in Device Validity mask
-    6.	For every bit that is 0 in Device Validity mask
-        a.	Set value in buffer to hardcoded default value
-        b.	Set bit in Device Validity mask
-
-        Parameters:
-            id [in]:			The id of the device to initialize
-            data_buf[in/out]:	In:		Size of buffer in memger cb
-                                Out:	Initialization data
-
-*/
 void   CalcInitValue(USHORT		id, PDEVICE_INIT_VALS data_buf)
 {
 
@@ -1802,9 +1468,9 @@ void   CalcInitValue(USHORT		id, PDEVICE_INIT_VALS data_buf)
     DEVICE_INIT_VALS  init_master;
     unsigned int mask_device = 0, mask_master = 0;
     int i, j, k;
-    UCHAR InitValAxis[VJOY_NUMBER_OF_AXES] = { 50, 50, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    UCHAR InitValPov[VJOY_NUMBER_OF_HAT] = { (UCHAR)-1, (UCHAR)-1, (UCHAR)-1, (UCHAR)-1 };
-    UCHAR ButtonMask[VJOY_NUMBER_OF_BUTTONS/8] = { 0 };
+    UCHAR InitValAxis[Joystick_NUMBER_OF_AXES] = { 50, 50, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    UCHAR InitValPov[Joystick_NUMBER_OF_HAT] = { (UCHAR)-1, (UCHAR)-1, (UCHAR)-1, (UCHAR)-1 };
+    UCHAR ButtonMask[Joystick_NUMBER_OF_BUTTONS/8] = { 0 };
     int nAxes, nPovs, offset;
 
     PAGED_CODE();
@@ -1940,7 +1606,7 @@ void UpdateCollections(WDFDEVICE Device)
 void InitializeDeviceContext(PDEVICE_EXTENSION   devContext)
 {
     // Init array of pointers to reports
-    for (int id = 1; id<=VJOY_MAX_N_DEVICES; id++) {
+    for (int id = 1; id<= Joystick_MAX_N_DEVICES; id++) {
         devContext->positions[id-1] = NULL;
         Ffb_ResetPIDData(devContext, id);
     }
@@ -1991,23 +1657,23 @@ void InitializeDefaultDev(PDEVICE_EXTENSION   devContext)
         CalcInitValue(0, &data_buf);
 
         // Initialize all fields
-        devContext->positions[index]->ValX = data_buf.InitValAxis[0] * VJOY_AXIS_MAX_VALUE / 100 + 1;//0x7FFF/2+1;
-        devContext->positions[index]->ValY = data_buf.InitValAxis[1] * VJOY_AXIS_MAX_VALUE / 100 + 1;//0x7FFF/2+1;
-        devContext->positions[index]->ValZ = data_buf.InitValAxis[2] * VJOY_AXIS_MAX_VALUE / 100 + 1;//0x7FFF/2+1;
-        devContext->positions[index]->ValRX = data_buf.InitValAxis[3] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValRY = data_buf.InitValAxis[4] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValRZ = data_buf.InitValAxis[5] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValSlider = data_buf.InitValAxis[6] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValDial = data_buf.InitValAxis[7] * VJOY_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValX = data_buf.InitValAxis[0] * Joystick_AXIS_MAX_VALUE / 100 + 1;//0x7FFF/2+1;
+        devContext->positions[index]->ValY = data_buf.InitValAxis[1] * Joystick_AXIS_MAX_VALUE / 100 + 1;//0x7FFF/2+1;
+        devContext->positions[index]->ValZ = data_buf.InitValAxis[2] * Joystick_AXIS_MAX_VALUE / 100 + 1;//0x7FFF/2+1;
+        devContext->positions[index]->ValRX = data_buf.InitValAxis[3] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValRY = data_buf.InitValAxis[4] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValRZ = data_buf.InitValAxis[5] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValSlider = data_buf.InitValAxis[6] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValDial = data_buf.InitValAxis[7] * Joystick_AXIS_MAX_VALUE / 100 + 1;
 
-        devContext->positions[index]->ValWheel = data_buf.InitValAxis[8] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValAccelerator = data_buf.InitValAxis[9] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValBrake = data_buf.InitValAxis[10] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValClutch = data_buf.InitValAxis[11] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValSteering = data_buf.InitValAxis[12] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValThrottle = data_buf.InitValAxis[13] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValRudder = data_buf.InitValAxis[14] * VJOY_AXIS_MAX_VALUE / 100 + 1;
-        devContext->positions[index]->ValAileron = data_buf.InitValAxis[15] * VJOY_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValWheel = data_buf.InitValAxis[8] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValAccelerator = data_buf.InitValAxis[9] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValBrake = data_buf.InitValAxis[10] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValClutch = data_buf.InitValAxis[11] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValSteering = data_buf.InitValAxis[12] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValThrottle = data_buf.InitValAxis[13] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValRudder = data_buf.InitValAxis[14] * Joystick_AXIS_MAX_VALUE / 100 + 1;
+        devContext->positions[index]->ValAileron = data_buf.InitValAxis[15] * Joystick_AXIS_MAX_VALUE / 100 + 1;
 
         if (data_buf.InitValPov[0] == -1)
             devContext->positions[index]->ValHats = (DWORD)-1;
@@ -2062,7 +1728,7 @@ void ResetDeviceControls(int id, PDEVICE_EXTENSION devContext, PDEVICE_INIT_VALS
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "ResetDeviceControls: Resetting device:%d [requested]\n", id);
 
     // Sanity check
-    if (!devContext || id < 1 || id > VJOY_MAX_N_DEVICES || !devContext->positions[index] || !pdata_buf)
+    if (!devContext || id < 1 || id > Joystick_MAX_N_DEVICES || !devContext->positions[index] || !pdata_buf)
         return;
 
     // Device exists?
@@ -2072,23 +1738,23 @@ void ResetDeviceControls(int id, PDEVICE_EXTENSION devContext, PDEVICE_INIT_VALS
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_INIT, "ResetDeviceControls: Resetting device:%d [granted]\n", id);
 
     // Initialize all fields
-    devContext->positions[index]->ValX = pdata_buf->InitValAxis[0] * VJOY_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
-    devContext->positions[index]->ValY = pdata_buf->InitValAxis[1] * VJOY_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
-    devContext->positions[index]->ValZ = pdata_buf->InitValAxis[2] * VJOY_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
-    devContext->positions[index]->ValRX = pdata_buf->InitValAxis[3] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValRY = pdata_buf->InitValAxis[4] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValRZ = pdata_buf->InitValAxis[5] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValSlider = pdata_buf->InitValAxis[6] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValDial = pdata_buf->InitValAxis[7] * VJOY_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValX = pdata_buf->InitValAxis[0] * Joystick_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
+    devContext->positions[index]->ValY = pdata_buf->InitValAxis[1] * Joystick_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
+    devContext->positions[index]->ValZ = pdata_buf->InitValAxis[2] * Joystick_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
+    devContext->positions[index]->ValRX = pdata_buf->InitValAxis[3] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValRY = pdata_buf->InitValAxis[4] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValRZ = pdata_buf->InitValAxis[5] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValSlider = pdata_buf->InitValAxis[6] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValDial = pdata_buf->InitValAxis[7] * Joystick_AXIS_MAX_VALUE / 2 + 1;
 
-    devContext->positions[index]->ValWheel = pdata_buf->InitValAxis[8] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValAccelerator = pdata_buf->InitValAxis[9] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValBrake = pdata_buf->InitValAxis[10] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValClutch = pdata_buf->InitValAxis[11] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValSteering = pdata_buf->InitValAxis[12] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValThrottle = pdata_buf->InitValAxis[13] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValRudder = pdata_buf->InitValAxis[14] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-    devContext->positions[index]->ValAileron = pdata_buf->InitValAxis[15] * VJOY_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValWheel = pdata_buf->InitValAxis[8] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValAccelerator = pdata_buf->InitValAxis[9] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValBrake = pdata_buf->InitValAxis[10] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValClutch = pdata_buf->InitValAxis[11] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValSteering = pdata_buf->InitValAxis[12] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValThrottle = pdata_buf->InitValAxis[13] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValRudder = pdata_buf->InitValAxis[14] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+    devContext->positions[index]->ValAileron = pdata_buf->InitValAxis[15] * Joystick_AXIS_MAX_VALUE / 2 + 1;
 
     if (pdata_buf->InitValPov[0] == -1)
         devContext->positions[index]->ValHats = (DWORD)-1;
@@ -2138,7 +1804,7 @@ void InitializeDev(PDEVICE_EXTENSION devContext, USHORT Mask, USHORT FFBMask, BO
     }
 
     // Create a DEVICE_POSITION structure for each hard-coded top-level collection
-    for (index = 0; index<VJOY_MAX_N_DEVICES; index++) {
+    for (index = 0; index< Joystick_MAX_N_DEVICES; index++) {
 
         // Mask bit will give implemented status
         if (!((Mask >> index) & 1)) {
@@ -2157,7 +1823,7 @@ void InitializeDev(PDEVICE_EXTENSION devContext, USHORT Mask, USHORT FFBMask, BO
         TraceEvents(TRACE_LEVEL_VERBOSE, DBG_INIT, "InitializeDev: enabling id=%d\n", index+1);
 
         if ((FFBMask >> index) & 1) {
-#ifdef VJOY_HAS_FFB
+#ifdef Joystick_HAS_FFB
             TraceEvents(TRACE_LEVEL_VERBOSE, DBG_INIT, "InitializeDev: enabling FFB for id=%d\n", index+1);
             //FfbActiveSet(TRUE, index+1, devContext);
 #else
@@ -2183,23 +1849,23 @@ void InitializeDev(PDEVICE_EXTENSION devContext, USHORT Mask, USHORT FFBMask, BO
         CalcInitValue((USHORT)index + 1, &data_buf);
 
         // Initialize all fields
-        devContext->positions[index]->ValX = data_buf.InitValAxis[0] * VJOY_AXIS_MAX_VALUE / 2 +1;//0x7FFF/2+1;
-        devContext->positions[index]->ValY = data_buf.InitValAxis[1] * VJOY_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
-        devContext->positions[index]->ValZ = data_buf.InitValAxis[2] * VJOY_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
-        devContext->positions[index]->ValRX = data_buf.InitValAxis[3] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValRY = data_buf.InitValAxis[4] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValRZ = data_buf.InitValAxis[5] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValSlider = data_buf.InitValAxis[6] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValDial = data_buf.InitValAxis[7] * VJOY_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValX = data_buf.InitValAxis[0] * Joystick_AXIS_MAX_VALUE / 2 +1;//0x7FFF/2+1;
+        devContext->positions[index]->ValY = data_buf.InitValAxis[1] * Joystick_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
+        devContext->positions[index]->ValZ = data_buf.InitValAxis[2] * Joystick_AXIS_MAX_VALUE / 2 + 1;//0x7FFF/2+1;
+        devContext->positions[index]->ValRX = data_buf.InitValAxis[3] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValRY = data_buf.InitValAxis[4] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValRZ = data_buf.InitValAxis[5] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValSlider = data_buf.InitValAxis[6] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValDial = data_buf.InitValAxis[7] * Joystick_AXIS_MAX_VALUE / 2 + 1;
         // Should be 0?
-        devContext->positions[index]->ValWheel = data_buf.InitValAxis[8] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValAccelerator = data_buf.InitValAxis[9] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValBrake = data_buf.InitValAxis[10] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValClutch = data_buf.InitValAxis[11] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValSteering = data_buf.InitValAxis[12] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValThrottle = data_buf.InitValAxis[13] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValRudder = data_buf.InitValAxis[14] * VJOY_AXIS_MAX_VALUE / 2 + 1;
-        devContext->positions[index]->ValAileron = data_buf.InitValAxis[15] * VJOY_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValWheel = data_buf.InitValAxis[8] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValAccelerator = data_buf.InitValAxis[9] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValBrake = data_buf.InitValAxis[10] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValClutch = data_buf.InitValAxis[11] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValSteering = data_buf.InitValAxis[12] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValThrottle = data_buf.InitValAxis[13] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValRudder = data_buf.InitValAxis[14] * Joystick_AXIS_MAX_VALUE / 2 + 1;
+        devContext->positions[index]->ValAileron = data_buf.InitValAxis[15] * Joystick_AXIS_MAX_VALUE / 2 + 1;
 
         // Mark position data as ready to be read
         devContext->PositionReady[index] = TRUE;
@@ -2279,7 +1945,7 @@ void CleanUpDev(PDEVICE_EXTENSION   devContext)
 
     // Destroy and init DEVICE_POSITION structure for each hard-coded top-level collection
     if (STATUS_SUCCESS == WdfWaitLockAcquire(devContext->positionLock, &timeout)) {
-        for (index = 0; index<VJOY_MAX_N_DEVICES; index++) {
+        for (index = 0; index< Joystick_MAX_N_DEVICES; index++) {
             if (devContext->positions[index]) {
                 cTag[3] = SerialL[index];
                 cTag[2] = SerialH[index];
@@ -2356,7 +2022,7 @@ USHORT ParseIdInDescriptor(BYTE* desc, DWORD dDescSize)
         }
         desc++;
     }
-    if (id < 1 || id>VJOY_MAX_N_DEVICES) {
+    if (id < 1 || id>Joystick_MAX_N_DEVICES) {
         id = 0;
     }
 
@@ -2633,16 +2299,16 @@ void Ffb_ResetPIDData(
     // Default lastly created BlockIndex is 0 (not created)
     PFFB_DEVICE_PID pid = &(devContext->FfbPIDData[id-1]);
 
-    pid->PIDPool.MaxSimultaneousEffects = VJOY_FFB_MAX_SIMULTANEOUS_EFFECTS;
+    pid->PIDPool.MaxSimultaneousEffects = Joystick_FFB_MAX_SIMULTANEOUS_EFFECTS;
     // bit0=1:own managed pool
     // bit1=0:one parameter block set for each effect block
     pid->PIDPool.MemoryManagement = 0;
 
 #ifdef FIRST_EID_PREALLOCATED
-    pid->PIDPool.RAMPoolSize = (USHORT)(sizeof(FFB_PID_EFFECT_STATE_REPORT)*(VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX));
-    pid->PIDBlockLoad.EffectBlockIndex = VJOY_FFB_FIRST_EFFECT_ID;
+    pid->PIDPool.RAMPoolSize = (USHORT)(sizeof(FFB_PID_EFFECT_STATE_REPORT)*(Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX));
+    pid->PIDBlockLoad.EffectBlockIndex = Joystick_FFB_FIRST_EFFECT_ID;
     pid->PIDBlockLoad.LoadStatus = 1;
-    pid->PIDBlockLoad.RAMPoolAvailable = sizeof(FFB_PID_EFFECT_STATE_REPORT)*(VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX-1);
+    pid->PIDBlockLoad.RAMPoolAvailable = sizeof(FFB_PID_EFFECT_STATE_REPORT)*(Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX-1);
 #else
     pid->PIDPool.RAMPoolSize = 0xFFFF;
     pid->PIDBlockLoad.EffectBlockIndex = 0;
@@ -2681,14 +2347,14 @@ void Ffb_BlockIndexFreeAll(
 
     PFFB_DEVICE_PID pid = &(devContext->FfbPIDData[id-1]);
     pid->LastEID = 0;
-    pid->NextFreeEID = VJOY_FFB_FIRST_EFFECT_ID;
-    for (int j = 0; j<VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX; j++) {
-        pid->EffectStates[j].InUse = VJOY_FFB_EFFECT_FREE;
+    pid->NextFreeEID = Joystick_FFB_FIRST_EFFECT_ID;
+    for (int j = 0; j< Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX; j++) {
+        pid->EffectStates[j].InUse = Joystick_FFB_EFFECT_FREE;
         pid->EffectStates[j].PIDEffectStateReport = 0;
     }
 
     // Update RAM pool?
-    pid->PIDBlockLoad.RAMPoolAvailable = (USHORT)(sizeof(FFB_PID_EFFECT_STATE_REPORT)*((int)VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX-1));
+    pid->PIDBlockLoad.RAMPoolAvailable = (USHORT)(sizeof(FFB_PID_EFFECT_STATE_REPORT)*((int)Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX-1));
 
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_FFB, "FfbBlockIndexFreeAll: exiting\n");
 }
@@ -2705,11 +2371,11 @@ void Ffb_BlockIndexFree(
 {
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_FFB, "FfbBlockIndexFree: entering\n");
     PFFB_DEVICE_PID pid = &(devContext->FfbPIDData[id-1]);
-    if (EffectID<1 || EffectID >= VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX) {
+    if (EffectID<1 || EffectID >= Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX) {
         TraceEvents(TRACE_LEVEL_ERROR, DBG_FFB, "FfbBlockIndexFree: error wrong eid=%d\n", EffectID);
         return;
     }
-    pid->EffectStates[EffectID-1].InUse = VJOY_FFB_EFFECT_FREE;
+    pid->EffectStates[EffectID-1].InUse = Joystick_FFB_EFFECT_FREE;
     // Force next free block to point to this new empty block to fill holes
     pid->NextFreeEID = EffectID;
 
@@ -2732,12 +2398,12 @@ BYTE Ffb_GetNextFreeEffect(
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_FFB, "FfbGetNextFreeEffect: enter with id=%d, NextEID=%d\n", id, pid->NextFreeEID);
 
     // Check for effect full
-    if (pid->NextFreeEID > VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX) {
+    if (pid->NextFreeEID > Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX) {
         TraceEvents(TRACE_LEVEL_ERROR, DBG_FFB, "FfbGetNextFreeEffect: full! (NextEID=%d)\n", pid->NextFreeEID);
         return 0;
     }
     // Check current slot not in use
-    if (pid->EffectStates[pid->NextFreeEID-1].InUse != VJOY_FFB_EFFECT_FREE) {
+    if (pid->EffectStates[pid->NextFreeEID-1].InUse != Joystick_FFB_EFFECT_FREE) {
         TraceEvents(TRACE_LEVEL_ERROR, DBG_FFB, "FfbGetNextFreeEffect: already used! (NextEID=%d)\n", pid->NextFreeEID);
         return 0;
     }
@@ -2745,16 +2411,16 @@ BYTE Ffb_GetNextFreeEffect(
     // Pick next free slot as new current slot
     pid->LastEID = pid->NextFreeEID;
     BYTE effectId = pid->LastEID;
-    pid->EffectStates[effectId-1].InUse = VJOY_FFB_EFFECT_ALLOCATED;
+    pid->EffectStates[effectId-1].InUse = Joystick_FFB_EFFECT_ALLOCATED;
 
     // Find the next free slot by scanning
     int firstFree = 0;
-    for (; firstFree<VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX; firstFree++) {
-        if (pid->EffectStates[firstFree].InUse == VJOY_FFB_EFFECT_FREE) {
+    for (; firstFree< Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX; firstFree++) {
+        if (pid->EffectStates[firstFree].InUse == Joystick_FFB_EFFECT_FREE) {
             break;
         }
     }
-    // Save index of first free. If not not found, will be equal to VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX
+    // Save index of first free. If not not found, will be equal to Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX
     // and the last free slot was taken.
     pid->NextFreeEID = (BYTE)(firstFree+1);
 
@@ -2779,8 +2445,8 @@ BYTE Ffb_GetNumUsedEffect(
     TraceEvents(TRACE_LEVEL_INFORMATION, DBG_FFB, "Ffb_GetNumUsedEffect: enter with id=%d, NextEID=%d\n", id, pid->NextFreeEID);
 
     BYTE numUsed = 0;
-    for (int idx = 0; idx<VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX; idx++) {
-        if (pid->EffectStates[idx].InUse == VJOY_FFB_EFFECT_ALLOCATED) {
+    for (int idx = 0; idx< Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX; idx++) {
+        if (pid->EffectStates[idx].InUse == Joystick_FFB_EFFECT_ALLOCATED) {
             numUsed++;
         }
     }
@@ -2870,7 +2536,7 @@ BOOLEAN Ffb_ProcessPacket(
             Ffb_BlockIndexFree(devContext, id, eid);
             // Update PID block
             int numUsed = Ffb_GetNumUsedEffect(devContext, id);
-            pid->PIDBlockLoad.RAMPoolAvailable = (USHORT)(sizeof(FFB_PID_EFFECT_STATE_REPORT)*(VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX-numUsed));
+            pid->PIDBlockLoad.RAMPoolAvailable = (USHORT)(sizeof(FFB_PID_EFFECT_STATE_REPORT)*(Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX-numUsed));
 
         } break;
 
@@ -2901,26 +2567,26 @@ BOOLEAN Ffb_ProcessPacket(
 
             // Update RAM pool in PID?
             int numUsed = Ffb_GetNumUsedEffect(devContext, id);
-            pid->PIDBlockLoad.RAMPoolAvailable = (USHORT)(sizeof(FFB_PID_EFFECT_STATE_REPORT)*(VJOY_FFB_MAX_EFFECTS_BLOCK_INDEX-numUsed));
+            pid->PIDBlockLoad.RAMPoolAvailable = (USHORT)(sizeof(FFB_PID_EFFECT_STATE_REPORT)*(Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX-numUsed));
 
             TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "Ffb_ProcessPacket: CREATE NEW EFFECT eid=%d\n", eid);
         } break;
 
         case (HID_ID_BLKLDREP+0x10):
         {
-            // Handled in vJoyGetFeature()
+            // Handled in JoystickGetFeature()
             TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "Ffb_ProcessPacket: BLOCK LOAD\n");
         } break;
 
         case (HID_ID_POOLREP+0x10):
         {
-            // Handled in vJoyGetFeature()
+            // Handled in JoystickGetFeature()
             TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "Ffb_ProcessPacket: POOL\n");
         } break;
 
         case (HID_ID_STATEREP+0x10):
         {
-            // Handled in vJoyGetFeature()
+            // Handled in JoystickGetFeature()
             TraceEvents(TRACE_LEVEL_VERBOSE, DBG_FFB, "Ffb_ProcessPacket: STATE REPORT\n");
         } break;
 
