@@ -15,7 +15,7 @@ Class=HIDClass
 ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
 Provider=%VENDOR%
 ;LayoutFile=layout.inf
-DriverVer = 07/06/2024,19.2.58.695
+DriverVer = 07/07/2024,14.15.48.443
 CatalogFile = Joystick.cat
 PnpLockdown = 1
 
@@ -46,14 +46,17 @@ joystick.Inst_CoInstaller_CopyFiles = 11
 %Joystick%    = joystick.Inst.Win7, root\VID_1234&PID_0FFB&REV_0222
 %Joystick2%   = joystick.Inst.Win7, root\VID_1234&PID_0FFB&REV_0222
 %Product.Name%= joystick.Inst.Win7, root\VID_1234&PID_0FFB&REV_0222
+
 ; PID 1FFB for FFB
 %Joystick%    = joystick.Inst.Win7, root\VID_1234&PID_1FFB&REV_0222
 %Joystick2%   = joystick.Inst.Win7, root\VID_1234&PID_0FFB&REV_0222
 %Product.Name%= joystick.Inst.Win7, root\VID_1234&PID_0FFB&REV_0222
+
 ; PID BEAD for FFB with Registry key
 %Joystick%    = joystick.Inst.Win7, root\VID_1234&PID_BEAD&REV_0222
 %Joystick2%   = joystick.Inst.Win7, root\VID_1234&PID_0FFB&REV_0222
 %Product.Name%= joystick.Inst.Win7, root\VID_1234&PID_0FFB&REV_0222
+
 ;===============================================================
 ;   Joystick for Win7
 ;   Instead of using KMDFJoystick.sys as a filter, use the inbox 
@@ -156,11 +159,11 @@ KmdfLibraryVersion = 1.9
 [Strings]
 ;  *******Localizable Strings******* 
 VENDOR         = "Qizhiwoniu" 
-Joystick       = "Joystick Device"
+Joystick       = "YuPeng Joystick"
 Joystick2	   = "USB ÊÖ±ú"
 DISK_NAME      = "Joystick Device Install Disk"
 KMDFJoystick.SVCDESC= "Filter Driver Service for HID-KMDF Interface layer"
-Product.Name   = "YuPeng GamePad"
+Product.Name   = "ÆßÖ»ÎÏÅ£ ÊÖ±ú"
 DeviceName    = "YuPeng Joystick"
 ;  *******Non Localizable Strings******* 
 

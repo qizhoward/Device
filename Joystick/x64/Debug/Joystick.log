@@ -1,13 +1,13 @@
 ﻿  Building 'Joystick' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
   Stamping x64\Debug\Joystick.inf
-  Stamping [Version] section with DriverVer=07/06/2024,19.2.58.695
-C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(112-112): warning 2083: Section [copysystemsysfiles] not referenced or used.
-C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(120-120): warning 2083: Section [copyfilesdll] not referenced or used.
-C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(139-139): warning 2083: Section [joystick.inst.nt.coinstallers] not referenced or used.
-C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(143-143): warning 2083: Section [joystick.inst_coinstaller_addreg] not referenced or used.
-C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(147-147): warning 2083: Section [joystick.inst_coinstaller_copyfiles] not referenced or used.
-C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(151-151): warning 2083: Section [joystick.inst.nt.wdf] not referenced or used.
-C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(153-153): warning 2083: Section [joystick_wdfsect] not referenced or used.
+  Stamping [Version] section with DriverVer=07/07/2024,14.15.48.443
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(115-115): warning 2083: Section [copysystemsysfiles] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(123-123): warning 2083: Section [copyfilesdll] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(142-142): warning 2083: Section [joystick.inst.nt.coinstallers] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(146-146): warning 2083: Section [joystick.inst_coinstaller_addreg] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(150-150): warning 2083: Section [joystick.inst_coinstaller_copyfiles] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(154-154): warning 2083: Section [joystick.inst.nt.wdf] not referenced or used.
+C:\Users\Administrator\Documents\Driver\Joystick\Joystick.inf(156-156): warning 2083: Section [joystick_wdfsect] not referenced or used.
   driver.c
   hid.c
   rawpdo.c

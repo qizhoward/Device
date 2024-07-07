@@ -111,6 +111,7 @@ JoystickEvtDeviceAdd(
     WDFQUEUE                      queue;
     //WDF_PNPPOWER_EVENT_CALLBACKS  pnpPowerCallbacks;
     WDF_TIMER_CONFIG              timerConfig;
+
     DECLARE_CONST_UNICODE_STRING(CompatId, COMPATIBLE_DEVICE_ID);
     DECLARE_CONST_UNICODE_STRING(DeviceId, Joystick_DEVICE_ID);
     DECLARE_CONST_UNICODE_STRING(InstanceId, Joystick_INSTANCE_ID);

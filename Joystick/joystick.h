@@ -94,16 +94,16 @@ CONST  HID_REPORT_DESCRIPTOR       G_DefaultReportDescriptor[REPORT_DESCRIPTOR_S
     0x15, 0x01,                    //     LOGICAL_MINIMUM (1)
     0x26, 0xff, 0x7f,              //     LOGICAL_MAXIMUM (32767)
     0x75, 0x20,                    //     REPORT_SIZE (32)
-    0x95, 0x08,                    //     REPORT_COUNT (8)
+    0x95, 0x20,                    //     REPORT_COUNT (32)
     0x81, 0x02,                    //     INPUT (Data,Var,Abs)
     0xc0,                          //   END_COLLECTION
     0x05, 0x09,                    //   USAGE_PAGE (Button)
     0x19, 0x01,                    //   USAGE_MINIMUM (Button 1)
-    0x29, 0x08,                    //   USAGE_MAXIMUM (Button 8)
+    0x29, 0x20,                    //   USAGE_MAXIMUM (Button 32)
     0x15, 0x00,                    //   LOGICAL_MINIMUM (0)
     0x25, 0x01,                    //   LOGICAL_MAXIMUM (1)
     0x75, 0x01,                    //   REPORT_SIZE (1)
-    0x95, 0x08,                    //   REPORT_COUNT (8)
+    0x95, 0x20,                    //   REPORT_COUNT (32)
     0x55, 0x00,                    //   UNIT_EXPONENT (0)
     0x65, 0x00,                    //   UNIT (None)
     0x81, 0x02,                    //   INPUT (Data,Var,Abs)
@@ -185,9 +185,9 @@ char G_DefaultReportDescriptor[] = {
     0x55, 0x00,                    //   UNIT_EXPONENT (0)
     0x65, 0x00,                    //   UNIT (None)
     0x19, 0x01,                    //   USAGE_MINIMUM (Button 1)
-    0x29, 0x08,                    //   USAGE_MAXIMUM (Button 8)
+    0x29, 0x20,                    //   USAGE_MAXIMUM (Button 32)
     0x75, 0x01,                    //   REPORT_SIZE (1)
-    0x95, 0x08,                    //   REPORT_COUNT (8)
+    0x95, 0x20,                    //   REPORT_COUNT (32)
     0x81, 0x02,                    //   INPUT (Data,Var,Abs)
     /***************** Place holder for 24 buttons *******************/
     0x75, 0x18,                    //   REPORT_SIZE (24)
@@ -199,7 +199,7 @@ char G_DefaultReportDescriptor[] = {
     0x26, 0xff, 0x00,			  // Logical Maximum (255)
     0x46, 0xFF, 0x00,			  // Physical Maximum (255)
     0x95, 0x07,					  // Report Count (7)
-    0x75, 0x08,					  // Report Size (8)
+    0x75, 0x20,					  // Report Size (32)
     0x09, 0x03,					  // Usage (Vendor-Defined 3)   
     0x91, 0x02,					  // Output (Data,Var,Abs,NWrp,Lin,Pref,NNul,NVol,Bit)   
     0xC0,						  // End Collection   
@@ -227,7 +227,7 @@ char G_DefaultReportDescriptor[] = {
             0x09,0x26,    //    Usage ET Constant Force
             0x15,0x01,    //    Logical Minimum 1
             0x25,0x01,    //    Logical Maximum 1
-            0x75,0x08,    //    Report Size 8
+            0x75,0x20,    //    Report Size 32
             0x91,0x00,    //    Output
          0xC0,            //   END_COLLECTION (Logical2)
 
@@ -254,7 +254,7 @@ char G_DefaultReportDescriptor[] = {
          0x09,0x52,         //    Usage Gain
          0x09,0x53,         //    Usage Trigger Button
          0x25,0x7F,         //    Logical Maximum 127
-         0x75,0x08,         //    Report Size 8
+         0x75,0x20,         //    Report Size 32
          0x95,0x02,         //    Report Count 2
          0x91,0x02,         //    Output (Variable)
 
@@ -287,7 +287,7 @@ char G_DefaultReportDescriptor[] = {
                0x26,0xff,0x00,//   Logical Maximum 255
                0x46,0x68,0x01,//   PHYSICAL_MAXIMUM (360)
                0x66,0x14,0x00,//   UNIT (Eng Rot:Angular Pos)
-               0x75,0x08,    //    Report Size 8
+               0x75,0x20,    //    Report Size 32
                0x95,0x02,    //    Report Count 2
                0x91,0x02,    //    Output (Variable)
                0x65,0x00,      //  Unit 0
@@ -326,7 +326,7 @@ char G_DefaultReportDescriptor[] = {
         0x09,0x5B,         //    Usage Attack Level
         0x09,0x5D,         //    Usage Fade Level
         0x26,0xFF,0x00,    //    Logical Maximum FFh (255d)
-        0x75,0x08,         //    Report size 8 
+        0x75,0x20,         //    Report size 32 
         0x95,0x02,         //    Report Count 2
         0x91,0x02,         //    Output (Variable)
 
@@ -365,7 +365,7 @@ char G_DefaultReportDescriptor[] = {
         0x09,0x64,         //    USAGE (Negative Saturation)
         0x09,0x65,         //    USAGE (Dead Band)
         0x26,0xFF, 0x00,   //    LOGICAL_MAXIMUM (255)
-        0x75,0x08,         //    Report Size 8
+        0x75,0x20,         //    Report Size 32
         0x95,0x06,         //    Report Count 6
         0x91,0x02,         //    Output (Variable)
       0xC0     ,            //    End Collection
@@ -387,7 +387,7 @@ char G_DefaultReportDescriptor[] = {
      0x09,0x6F,         //    USAGE USAGE (Offset) 
      0x09,0x71,          //     USAGE (Phase) 
      0x26,0xFF, 0x00,   //    LOGICAL_MAXIMUM (255)
-     0x75,0x08,         //    Report Size 8
+     0x75,0x20,         //    Report Size 32
      0x95,0x03,         //    Report Count 3
      0x91,0x02,         //    Output (Variable)
 
@@ -420,7 +420,7 @@ char G_DefaultReportDescriptor[] = {
 
       0x09,0x70,         //    Usage magnitude
       0x26,0xFF, 0x00,   //    LOGICAL_MAXIMUM (255)
-      0x75,0x08,         //    Report Size
+      0x75,0x20,         //    Report Size
       0x91,0x02,         //    Output (Variable)
    0xC0     ,    //    End Collection (Datalink)
 
@@ -445,7 +445,7 @@ char G_DefaultReportDescriptor[] = {
          0x09,0x7B,         //  USAGE (Op Effect STOP) 
          0x15,0x01,         //    LOGICAL_MINIMUM 1
          0x25,0x03,         //    LOGICAL_MAXIMUM 3
-         0x75,0x08,         //    Report Size
+         0x75,0x20,         //    Report Size
          0x91,0x00,         //    OUTPUT (Data,Ary,Abs) 91 00
       0xC0     ,    //    End Collection (Datalink)
 
@@ -470,7 +470,7 @@ char G_DefaultReportDescriptor[] = {
       0xA1,0x02,    //    Collection Datalink
          0x09,0x73,         // USAGE (Set Constant Force Report)
          0x26,0xFF, 0x00,   // LOGICAL_MAXIMUM (255)
-         0x75,0x08,         // REPORT_SIZE (8)
+         0x75,0x20,         // REPORT_SIZE (32)
          0x95,0x01,         // REPORT_COUNT (1)
          0xB1,0x02,         //    FEATURE (Data,Var,Abs)
       0xC0     ,    //    End Collection (Datalink)
@@ -520,7 +520,7 @@ char G_DefaultReportDescriptor[] = {
          0x09,0x9C,         //    USAGE (DC Continue) 
          0x15,0x01,        //    Logical Maximum 1)
          0x25,0x06,         //    Logical Maximum 6)
-         0x95,0x08,         //    Report Count 8 ( wrong in usb pdf )
+         0x95,0x20,         //    Report Count 32 ( wrong in usb pdf )
          0x75,0x01,         //    Report Size 1 ( wrong in usb pdf )
          0x91,0x02,         //   OUTPUT (Data,Var,Abs)
       0xC0     ,    //    End Collection (Datalink)
@@ -543,7 +543,7 @@ char G_DefaultReportDescriptor[] = {
    0xA1,0x02,    //    Collection Datalink
       0x09,0x7E,         //    USAGE (Device Gain)
       0x26,0xFF, 0x00,   //    Logical Maximum 255)
-      0x75,0x08,         //    Report Size 8
+      0x75,0x20,         //    Report Size 32
       0x95,0x01,         //    Report Count 1
       0xB1,0x02,         //    FEATURE (Data,Var,Abs)
    0xC0     ,    //    End Collection (Datalink)
@@ -950,9 +950,9 @@ char G_DefaultReportDescriptor[] = {
     0x55, 0x00,                    //   UNIT_EXPONENT (0)
     0x65, 0x00,                    //   UNIT (None)
     0x19, 0x01,                    //   USAGE_MINIMUM (Button 1)
-    0x29, 0x08,                    //   USAGE_MAXIMUM (Button 8)
+    0x29, 0x20,                    //   USAGE_MAXIMUM (Button 32)
     0x75, 0x01,                    //   REPORT_SIZE (1)
-    0x95, 0x08,                    //   REPORT_COUNT (8)
+    0x95, 0x20,                    //   REPORT_COUNT (32)
     0x81, 0x02,                    //   INPUT (Data,Var,Abs)
     /***************** Place holder for 120 buttons *******************/
     0x75, 0x78,                    //   REPORT_SIZE (120)
@@ -1004,9 +1004,9 @@ char G_DefaultReportDescriptor[] = {
     0x55, 0x00,                    //   UNIT_EXPONENT (0)
     0x65, 0x00,                    //   UNIT (None)
     0x19, 0x01,                    //   USAGE_MINIMUM (Button 1)
-    0x29, 0x08,                    //   USAGE_MAXIMUM (Button 8)
+    0x29, 0x20,                    //   USAGE_MAXIMUM (Button 32)
     0x75, 0x01,                    //   REPORT_SIZE (1)
-    0x95, 0x08,                    //   REPORT_COUNT (8)
+    0x95, 0x20,                    //   REPORT_COUNT (32)
     0x81, 0x02,                    //   INPUT (Data,Var,Abs)
     /***************** Place holder for 120 buttons *******************/
     0x75, 0x78,                    //   REPORT_SIZE (120)

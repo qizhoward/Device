@@ -57,9 +57,9 @@
     0x55, 0x00,                    //   UNIT_EXPONENT (0)
     0x65, 0x00,                    //   UNIT (None)
     0x19, 0x01,                    //   USAGE_MINIMUM (Button 1)
-    0x29, 0x08,                    //   USAGE_MAXIMUM (Button 8)
+    0x29, 0x20,                    //   USAGE_MAXIMUM (Button 32)
     0x75, 0x01,                    //   REPORT_SIZE (1)
-    0x95, 0x08,                    //   REPORT_COUNT (8)
+    0x95, 0x20,                    //   REPORT_COUNT (32)
     0x81, 0x02,                    //   INPUT (Data,Var,Abs)
 
     /***************** Place holder for 120 buttons *******************/
@@ -202,16 +202,16 @@
        0x26,0xFF,0x00,    //    Logical Maximum FFh (255d)
        0x35,0x00,         //    Physical Minimum 0
        0x46,0x10,0x27,    //    Physical Maximum 2710h (10000d)
-       0x75,0x08,         //    Report Size 8
+       0x75,0x20,         //    Report Size 32
        0x95,0x01,         //    Report Count 1
        0x91,0x02,         //    Output (Variable)
 
        0x09,0x53,         //    Usage Trigger Button
        0x15,0x01,         //    Logical Minimum 1
-       0x25,0x08,         //    Logical Maximum 8
+       0x25,0x20,         //    Logical Maximum 32
        0x35,0x01,         //    Physical Minimum 1
-       0x45,0x08,         //    Physical Maximum 8
-       0x75,0x08,         //    Report Size 8
+       0x45,0x20,         //    Physical Maximum 32
+       0x75,0x20,         //    Report Size 32
        0x95,0x01,         //    Report Count 1
        0x91,0x02,         //    Output (Variable)
 
@@ -285,7 +285,7 @@
         0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Logical Maximum 80h (128d)
         0x35,0x01,         //    Physical Minimum 1
         0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Physical Maximum 80h (128d)
-        0x75,0x08,         //    Report Size 8
+        0x75,0x20,         //    Report Size 32
         0x95,0x01,         //    Report Count 1
         0x91,0x02,         //    Output (Variable)
 
@@ -321,7 +321,7 @@
        0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Logical Maximum 80h (128d)
        0x35,0x01,    //    Physical Minimum 1
        0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Physical Maximum 80h (128d)
-       0x75,0x08,    //    Report Size 8
+       0x75,0x20,    //    Report Size 32
        0x95,0x01,    //    Report Count 1
        0x91,0x02,    //    Output (Variable)
 
@@ -382,7 +382,7 @@
        0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,                   //    Logical Maximum 80h (128d)
        0x35,0x01,                   //    Physical Minimum 1
        0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,                   //    Physical Maximum 80h (128d)
-       0x75,0x08,                   //    Report Size 8
+       0x75,0x20,                   //    Report Size 32
        0x95,0x01,                   //    Report Count 1
        0x91,0x02,                   //    Output (Variable)
 
@@ -438,7 +438,7 @@
        0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Logical Maximum 80h (128d)
        0x35,0x01,         //    Physical Minimum 1
        0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Physical Maximum 80h (128d)
-       0x75,0x08,         //    Report Size 8
+       0x75,0x20,         //    Report Size 32
        0x95,0x01,         //    Report Count 1
        0x91,0x02,         //    Output (Variable)
 
@@ -460,7 +460,7 @@
        0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Logical Maximum 80h (128d)
        0x35,0x01,         //    Physical Minimum 1
        0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Physical Maximum 80h (128d)
-       0x75,0x08,         //    Report Size 8
+       0x75,0x20,         //    Report Size 32
        0x95,0x01,         //    Report Count 1
        0x91,0x02,         //    Output (Variable)
        0x09,0x75,         //    Usage Ramp Start
@@ -482,7 +482,7 @@
        0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Logical Maximum 80h (128d)
        0x35,0x01,         //    Physical Minimum 1
        0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Physical Maximum 80h (128d)
-       0x75,0x08,         //    Report Size 8
+       0x75,0x20,         //    Report Size 32
        0x95,0x01,         //    Report Count 1
        0x91,0x02,         //    Output (Variable)
 
@@ -500,7 +500,7 @@
        0x25,0x7F,         //    Logical Maximum 7Fh (127d)
        0x35,0x00,         //    Physical Minimum 0
        0x46,0xFF,0x00,    //    Physical Maximum FFh (255d)
-       0x75,0x08,         //    Report Size 8
+       0x75,0x20,         //    Report Size 32
        0x95,0x0C,         //    Report Count Ch (12d)
        0x92,0x02,0x01,    //       Output (Variable, Buffered)
     0xC0     ,    //    End Collection
@@ -529,7 +529,7 @@
        0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Logical Maximum 80h (128d)
        0x35,0x01,    //    Physical Minimum 1
        0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Physical Maximum 80h (128d)
-       0x75,0x08,    //    Report Size 8
+       0x75,0x20,    //    Report Size 32
        0x95,0x01,    //    Report Count 1
        0x91,0x02,    //    Output (Variable)
 
@@ -540,7 +540,7 @@
           0x09,0x7B,    //    Usage Op Effect Stop
           0x15,0x01,    //    Logical Minimum 1
           0x25,0x03,    //    Logical Maximum 3
-          0x75,0x08,    //    Report Size 8
+          0x75,0x20,    //    Report Size 32
           0x95,0x01,    //    Report Count 1
           0x91,0x00,    //    Output
        0xC0     ,         //    End Collection
@@ -561,7 +561,7 @@
        0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Logical Maximum 80h (128d)
        0x35,0x01,    //    Physical Minimum 1
        0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Physical Maximum 80h (128d)
-       0x75,0x08,    //    Report Size 8
+       0x75,0x20,    //    Report Size 32
        0x95,0x01,    //    Report Count 1
        0x91,0x02,    //    Output (Variable)
     0xC0     ,    //    End Collection
@@ -577,7 +577,7 @@
        0x09,0x9C,    //    Usage DC Device Continue
        0x15,0x01,    //    Logical Minimum 1
        0x25,0x06,    //    Logical Maximum 6
-       0x75,0x08,    //    Report Size 8
+       0x75,0x20,    //    Report Size 32
        0x95,0x01,    //    Report Count 1
        0x91,0x00,    //    Output
     0xC0     ,    //    End Collection
@@ -590,7 +590,7 @@
        0x26,0xFF,0x00,    //    Logical Maximum FFh (255d)
        0x35,0x00,         //    Physical Minimum 0
        0x46,0x10,0x27,    //    Physical Maximum 2710h (10000d)
-       0x75,0x08,         //    Report Size 8
+       0x75,0x20,         //    Report Size 32
        0x95,0x01,         //    Report Count 1
        0x91,0x02,         //    Output (Variable)
     0xC0     ,            //    End Collection
@@ -603,7 +603,7 @@
        0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Logical Maximum 80h (128d)
        0x35,0x01,         //    Physical Minimum 1
        0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,         //    Physical Maximum 80h (128d)
-       0x75,0x08,         //    Report Size 8
+       0x75,0x20,         //    Report Size 32
        0x95,0x01,         //    Report Count 1
        0x91,0x02,         //    Output (Variable)
 
@@ -612,7 +612,7 @@
        0x26,0xFF,0x00,    //    Logical Maximum FFh (255d)
        0x35,0x00,         //    Physical Minimum 0
        0x46,0xFF,0x00,    //    Physical Maximum FFh (255d)
-       0x75,0x08,         //    Report Size 8
+       0x75,0x20,         //    Report Size 32
        0x95,0x01,         //    Report Count 1
        0x91,0x02,         //    Output (Variable)
 
@@ -653,7 +653,7 @@
            0x25,0x0C,    //    Logical Maximum Ch (12d)
            0x35,0x01,    //    Physical Minimum 1
            0x45,0x0C,    //    Physical Maximum Ch (12d)
-           0x75,0x08,    //    Report Size 8
+           0x75,0x20,    //    Report Size 32
            0x95,0x01,    //    Report Count 1
            0xB1,0x00,    //    Feature
         0xC0     ,    // End Collection
@@ -679,7 +679,7 @@
         0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Logical Maximum 80h (128d)
         0x35,0x01,    //    Physical Minimum 1
         0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Physical Maximum 80h (128d)
-        0x75,0x08,    //    Report Size 8
+        0x75,0x20,    //    Report Size 32
         0x95,0x01,    //    Report Count 1
         0xB1,0x02,    //    Feature (Variable)
 
@@ -692,7 +692,7 @@
            0x25,0x03,    //    Logical Maximum 3
            0x35,0x01,    //    Physical Minimum 1
            0x45,0x03,    //    Physical Maximum 3
-           0x75,0x08,    //    Report Size 8
+           0x75,0x20,    //    Report Size 32
            0x95,0x01,    //    Report Count 1
            0xB1,0x00,    //    Feature
         0xC0     ,                   // End Collection
@@ -721,7 +721,7 @@
         0x09,0x83,                   //    Usage Simultaneous Effects Max
         0x26,0xFF,0x00,              //    Logical Maximum FFh (255d)
         0x46,0xFF,0x00,              //    Physical Maximum FFh (255d)
-        0x75,0x08,                   //    Report Size 8
+        0x75,0x20,                   //    Report Size 32
         0x95,0x01,                   //    Report Count 1
         0xB1,0x02,                   //    Feature (Variable)
 
@@ -747,7 +747,7 @@
         0x25, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Logical Maximum 80h (128d)
         0x35, 0x01,    //    Physical Minimum 1
         0x45, Joystick_FFB_MAX_EFFECTS_BLOCK_INDEX,    //    Physical Maximum 80h (128d)
-        0x75, 0x08,    //    Report Size 8
+        0x75, 0x20,    //    Report Size 32
         0x95, 0x01,    //    Report Count 1
         0xB1, 0x02,    //    Input
                 
